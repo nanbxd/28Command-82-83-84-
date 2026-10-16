@@ -5,12 +5,16 @@ import { OverviewPage } from './features/overview/OverviewPage';
 import '@fontsource-variable/manrope';
 import './styles.css';
 
+const AdminPage = React.lazy(() => import('./features/admin/AdminPage'));
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/cabinet" replace />} />
         <Route path="/cabinet" element={<OverviewPage />} />
+        <Route path="/admin" element={<Navigate to="/admin/requests" replace />} />
+        <Route path="/admin/:section" element={<React.Suspense fallback={<main role="status">Загружаем кабинет IC Group…</main>}><AdminPage /></React.Suspense>} />
         <Route path="*" element={<main className="not-found"><h1>Страница не найдена</h1><p>Вернитесь к обзору ваших объектов и работ.</p><Link className="button primary" to="/cabinet">Открыть кабинет</Link></main>} />
       </Routes>
     </BrowserRouter>
