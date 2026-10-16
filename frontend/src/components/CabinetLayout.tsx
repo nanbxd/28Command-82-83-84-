@@ -27,7 +27,7 @@ export function CabinetLayout({ children, organization }: { children: ReactNode;
   return <div className="app-shell">
     <a className="skip-link" href="#main">Перейти к содержимому</a>
     <aside className={`sidebar ${menuOpen ? 'is-open' : ''}`}>
-      <a className="brand" href="/cabinet" aria-label="IC Group — обзор кабинета"><span className="brand-symbol">ic</span><span>IC GROUP<span className="brand-caption">Сервис для вашего бизнеса</span></span></a>
+      <a className="brand" href="/" aria-label="IC Group — новая заявка"><img src="/brand/ic-group.png" alt="IC Group" /><span>Клиентский сервис</span></a>
       <div className="sidebar-label">Клиентский кабинет</div>
       <nav id="cabinet-navigation" aria-label="Разделы обзора">
         {navigation.map(({ href, label, icon: Icon }, index) => <a ref={index === 0 ? firstMenuLink : undefined} key={href} href={href} className={`nav-link ${active === href ? 'active' : ''}`} aria-current={active === href ? 'location' : undefined} onClick={() => { setActive(href); setMenuOpen(false); document.getElementById(href.slice(1))?.focus({ preventScroll: true }); }}><Icon size={19} aria-hidden="true" /><span>{label}</span>{active === href && <ChevronRight size={15} aria-hidden="true" />}</a>)}
@@ -37,7 +37,7 @@ export function CabinetLayout({ children, organization }: { children: ReactNode;
     <div className="workspace">
       <header className="topbar">
         <button ref={menuButton} className="icon-button mobile-menu" type="button" aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'} aria-controls="cabinet-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
-        <span className="topbar-title">Личный кабинет</span>
+        <a className="topbar-title" href="/">Новая заявка →</a>
         <div className="account"><span className="demo-label">Демо</span><span className="account-avatar" aria-hidden="true">МД</span><span className="account-name">{organization ?? 'Медеу Девелопмент'}<span>Организация клиента</span></span></div>
       </header>
       <main id="main" tabIndex={-1}>{children}</main>

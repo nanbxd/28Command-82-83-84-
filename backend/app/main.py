@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -13,13 +14,26 @@ from .config import Settings, get_settings
 from .db import get_db
 from .overview import build_overview
 from .schemas import Overview
+from .auth import router as auth_router
+from .requests import router as requests_router
 
 app = FastAPI(title="IC Group Client API", version="0.1.0")
 app.add_middleware(CORSMiddleware,
     allow_origins=[origin.strip() for origin in get_settings().frontend_origin.split(",")],
-    allow_credentials=False, allow_methods=["GET"], allow_headers=["Accept", "Content-Type"],
+    allow_credentials=False, allow_methods=["GET", "POST", "PATCH"], allow_headers=["Accept", "Content-Type", "Authorization"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.include_router(auth_router)
+app.include_router(requests_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_input(_request, exception):
+    # Do not reflect passwords or other submitted personal data in validation responses.
+    return JSONResponse(status_code=422, content={
+        "detail": "Проверьте заполненные поля и попробуйте ещё раз.",
+        "fields": [".".join(str(part) for part in error["loc"]) for error in exception.errors()],
+    })
 
 
 @app.exception_handler(SQLAlchemyError)
