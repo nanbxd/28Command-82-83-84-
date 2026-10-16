@@ -24,7 +24,9 @@ Connect a cleaning estimate and request to a client contract, service delivery, 
 - A client contract appears only after a manager has prepared it. Displaying it does not imply signature.
 - Quality requests first reach IC Group; executors see them only after a manager forwards them.
 - Demo data may come from the participant package and must be identified as demo data.
-- Current implementation starts with the client cabinet overview. Other routes follow in later steps.
+- The client cabinet overview is available at `/cabinet`. A separate administrative prototype at `/admin` contains incoming applications, active projects, and quality complaints.
+- The administrative prototype uses fictional records and browser-local changes, without authentication, live intake or server-side authorization. Its data adapter must be replaced with a role-protected FastAPI integration before using real administrative data.
+- The administrative checklist structure is imported from workbook 02; report completion and subcontractor agreement values remain explicitly demonstrative.
 
 ## Evidence on Hand
 
