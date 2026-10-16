@@ -38,6 +38,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="projects/:id" element={<ProjectPage />} />
           <Route path="complaints" element={<Complaints />} />
         </Route>
+        <Route path="/contractor" element={<Portal audience="contractor" />}>
+          <Route index element={<Navigate to="projects" replace />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectPage />} />
+          <Route path="accounts" element={<Accounts />} />
+          <Route path="complaints" element={<Complaints />} />
+        </Route>
         <Route path="/work" element={<Portal audience="worker" />}>
           <Route index element={<Navigate to="projects" replace />} />
           <Route path="ic-coins" element={<CoinsPage />} />
