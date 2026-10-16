@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from .auth import CurrentUser, Db, Manager, utcnow
 from .models import Organization, ServiceRequest, User
-from .operations_models import Complaint, Project, StoredFile, Visit
+from .operations_models import CleaningRun, Complaint, Project, StoredFile, Visit
 from .request_schemas import StrictModel
 
 router = APIRouter(prefix="/api/v1", tags=["Service operations"])
@@ -28,7 +28,7 @@ def event(user, action, text=""):
 
 def project_access(db, user, project_id):
     project = db.get(Project, project_id)
-    if project and (user.role in STAFF or (user.role == "client" and project.organization_id == user.organization_id)):
+    if project and (user.role in STAFF or (user.role == "contractor" and project.contractor_id == user.id) or (user.role == "client" and project.organization_id == user.organization_id)):
         return project
     if project and user.role == "worker" and db.scalar(select(Visit.id).where(Visit.project_id == project.id, Visit.worker_id == user.id)):
         return project
@@ -36,8 +36,12 @@ def project_access(db, user, project_id):
 
 
 def visit_access(db, user, visit_id, lock=False):
+    if lock:
+        current = db.get(Visit, visit_id)
+        if current and current.run_id:
+            db.scalar(select(CleaningRun).where(CleaningRun.id == current.run_id).with_for_update())
     query = select(Visit).where(Visit.id == visit_id)
-    row = db.scalar(query.with_for_update() if lock else query)
+    row = db.scalar(query.with_for_update().execution_options(populate_existing=True) if lock else query)
     if not row:
         raise HTTPException(404, "Уборка не найдена.")
     project_access(db, user, row.project_id)
@@ -51,7 +55,7 @@ def complaint_access(db, user, complaint_id):
     if not row:
         raise HTTPException(404, "Обращение не найдено.")
     project_access(db, user, row.project_id)
-    if user.role == "worker" and row.forwarded_to != user.id:
+    if user.role in {"worker", "contractor"} and row.forwarded_to != user.id:
         raise HTTPException(404, "Обращение не найдено.")
     return row
 
@@ -64,7 +68,7 @@ def file_access(db, user, row):
         complaint_access(db, user, row.complaint_id)
     elif row.visit_id:
         visit_access(db, user, row.visit_id)
-    elif user.role == "worker":
+    elif user.role in {"worker", "contractor"}:
         raise HTTPException(404, "Файл не найден.")
 
 
@@ -74,7 +78,7 @@ def file_output(row):
 
 def visit_output(db, row):
     worker = db.get(User, row.worker_id)
-    return {**{key: getattr(row, key) for key in ("id", "project_id", "worker_id", "planned_start", "planned_end", "actual_start", "actual_end", "status", "checklist", "notes", "history")}, "worker_name": worker.name}
+    return {**{key: getattr(row, key) for key in ("id", "project_id", "run_id", "zone", "worker_id", "planned_start", "planned_end", "actual_start", "actual_end", "status", "checklist", "notes", "history")}, "worker_name": worker.name}
 
 
 def project_output(db, user, row):
@@ -82,14 +86,15 @@ def project_output(db, user, row):
     if user.role == "worker":
         query = query.where(Visit.worker_id == user.id)
     visits = list(db.scalars(query.order_by(Visit.planned_start.desc())))
-    finished = [v.actual_end for v in visits if v.actual_end and v.status in {"submitted", "accepted"}]
+    finished = [v.actual_end for v in visits if not v.run_id and v.actual_end and v.status in {"submitted", "accepted"}]
+    finished = [*finished, *db.scalars(select(CleaningRun.completed_at).where(CleaningRun.project_id == row.id, CleaningRun.completed_at.is_not(None)))]
     next_visit = next(iter(sorted([v for v in visits if v.status == "planned"], key=lambda v: v.planned_start)), None)
     result = {key: getattr(row, key) for key in ("id", "request_id", "name", "details", "status", "plan", "service_start", "service_end", "created_at")}
-    result.update(company=db.get(Organization, row.organization_id).name,
+    result.update(contractor_id=row.contractor_id, contractor_name=db.get(User, row.contractor_id).name if row.contractor_id else None, company=db.get(Organization, row.organization_id).name,
         last_cleaning=max(finished) if finished else None,
         next_cleaning=next_visit.planned_start if next_visit else None,
         cleaning_now=any(v.status == "in_progress" for v in visits))
-    if user.role != "worker":
+    if user.role not in {"worker", "contractor"}:
         result.update({key: getattr(row, key) for key in ("contract_number", "contract_start", "contract_end", "price", "payment_terms")})
     return result
 
@@ -122,6 +127,8 @@ def list_projects(user: CurrentUser, db: Db, offset: int = Query(0, ge=0), limit
         query = query.where(Project.organization_id == user.organization_id)
     elif user.role == "worker":
         query = query.where(Project.id.in_(select(Visit.project_id).where(Visit.worker_id == user.id)))
+    elif user.role == "contractor":
+        query = query.where(Project.contractor_id == user.id)
     elif user.role not in STAFF:
         raise HTTPException(403, "Нет доступа.")
     return [project_output(db, user, row) for row in db.scalars(query.order_by(Project.created_at.desc(), Project.id).offset(offset).limit(limit))]
@@ -140,7 +147,7 @@ def get_project(project_id: str, user: CurrentUser, db: Db):
             files.append(file_output(f))
         except HTTPException:
             pass
-    return {**project_output(db, user, row), "visits": [visit_output(db, v) for v in db.scalars(query.order_by(Visit.planned_start.desc()))], "files": files}
+    return {**project_output(db, user, row), "runs": [{"id": r.id, "name": r.name, "completed_at": r.completed_at, "cancelled_at": r.cancelled_at} for r in db.scalars(select(CleaningRun).where(CleaningRun.project_id == row.id, CleaningRun.id.in_(select(Visit.run_id).where(Visit.worker_id == user.id)) if user.role == "worker" else True).order_by(CleaningRun.created_at.desc()))], "visits": [visit_output(db, v) for v in db.scalars(query.order_by(Visit.planned_start.desc()))], "files": files}
 
 
 class ProjectUpdate(StrictModel):
@@ -228,6 +235,8 @@ def validate_schedule(existing, data, project_id):
 @router.post("/staff/projects/{project_id}/visits", status_code=201)
 def schedule_visit(project_id: str, data: VisitInput, user: Manager, db: Db):
     project = project_access(db, user, project_id)
+    if project.contractor_id:
+        raise HTTPException(409, "Задания на закреплённом объекте создаёт субподрядчик.")
     if project.status in {"paused", "completed"}:
         raise HTTPException(409, "Возобновите обслуживание перед назначением уборки.")
     worker = db.scalar(select(User).where(User.id == data.worker_id).with_for_update())
@@ -255,9 +264,21 @@ class VisitAction(StrictModel):
 @router.post("/visits/{visit_id}/actions")
 def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
     row = visit_access(db, user, visit_id, lock=True)
-    if user.role not in STAFF and user.role != "worker":
+    if user.role == "contractor" and not row.run_id:
+        raise HTTPException(403, "Ранее созданными назначениями управляет IC Group.")
+    if row.run_id:
+        run = db.scalar(select(CleaningRun).where(CleaningRun.id == row.run_id).with_for_update())
+        if run.completed_at:
+            raise HTTPException(409, "Клининг уже подтверждён.")
+        if data.action == "accept":
+            raise HTTPException(403, "Подтвердите клининг объекта целиком.")
+        if data.action in {"return", "cancel"} and user.id != run.contractor_id:
+            raise HTTPException(403, "Заданиями управляет назначенный субподрядчик.")
+        if data.action in {"start", "save", "submit"} and user.id != row.worker_id:
+            raise HTTPException(403, "Работу отмечает назначенный работник.")
+    if user.role not in STAFF and user.role not in {"worker", "contractor"}:
         raise HTTPException(403, "Изменять уборку может исполнитель или сотрудник IC Group.")
-    if data.action in {"accept", "return", "cancel"} and user.role not in STAFF:
+    if data.action in {"accept", "return", "cancel"} and user.role not in STAFF and not (row.run_id and user.role == "contractor"):
         raise HTTPException(403, "Приёмка доступна только IC Group.")
     kinds = set(db.scalars(select(StoredFile.kind).where(StoredFile.visit_id == row.id)))
     transitions = {"start": ({"planned"}, "in_progress"), "submit": ({"in_progress", "correction"}, "submitted"),
@@ -286,6 +307,10 @@ def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
     if data.action == "return" and not data.notes:
         raise HTTPException(422, "Укажите причину возврата отчёта.")
     row.status = status
+    if row.run_id and data.action == "cancel":
+        db.flush()
+        if not db.scalar(select(Visit.id).where(Visit.run_id == row.run_id, Visit.status != "cancelled")):
+            run.cancelled_at = utcnow()
     row.history = [*row.history, event(user, data.action, data.notes)]
     db.commit()
     return visit_output(db, row)
@@ -319,8 +344,10 @@ def list_complaints(user: CurrentUser, db: Db, offset: int = Query(0, ge=0), lim
     query = select(Complaint).join(Project)
     if user.role == "client":
         query = query.where(Project.organization_id == user.organization_id)
-    elif user.role == "worker":
+    elif user.role in {"worker", "contractor"}:
         query = query.where(Complaint.forwarded_to == user.id)
+        if user.role == "contractor":
+            query = query.where(Project.contractor_id == user.id)
     elif user.role not in STAFF:
         raise HTTPException(403, "Нет доступа.")
     return [complaint_output(db, row) for row in db.scalars(query.order_by(Complaint.created_at.desc(), Complaint.id).offset(offset).limit(limit))]
@@ -347,7 +374,7 @@ def reply_complaint(complaint_id: str, data: ComplaintAction, user: CurrentUser,
     if (data.status or "forwarded_to" in data.model_fields_set) and user.role not in STAFF:
         raise HTTPException(403, "Статус и передачу обращения меняет IC Group.")
     if "forwarded_to" in data.model_fields_set:
-        if data.forwarded_to and not db.scalar(select(Visit.id).join(User, User.id == Visit.worker_id).where(
+        if data.forwarded_to and data.forwarded_to != db.get(Project, row.project_id).contractor_id and not db.scalar(select(Visit.id).join(User, User.id == Visit.worker_id).where(
                 Visit.project_id == row.project_id, Visit.worker_id == data.forwarded_to, User.is_active.is_(True))):
             raise HTTPException(422, "Передать обращение можно только назначенному работнику объекта.")
         row.forwarded_to = data.forwarded_to
@@ -366,6 +393,8 @@ async def upload_file(project_id: str, request: Request, user: CurrentUser, db: 
     project_access(db, user, project_id)
     if kind in {"before", "after"}:
         visit = visit_access(db, user, visit_id, lock=True)
+        if visit.run_id and user.id != visit.worker_id:
+            raise HTTPException(403, "Фотоконтроль загружает назначенный работник.")
         if visit.project_id != project_id or user.role not in STAFF | {"worker"} or complaint_id:
             raise HTTPException(403, "Нет доступа к загрузке отчёта.")
         if visit.status not in ({"planned", "in_progress", "correction"} if kind == "before" else {"in_progress", "correction"}):
@@ -439,3 +468,83 @@ def document_state(file_id: str, data: DocumentState, user: Manager, db: Db):
     row.history = [*row.history, event(user, data.state, data.note)]
     db.commit()
     return file_output(row)
+
+class ContractorAssignment(StrictModel):
+    contractor_id: str
+
+
+@router.put("/staff/projects/{project_id}/contractor")
+def assign_contractor(project_id: str, data: ContractorAssignment, user: Manager, db: Db):
+    project = db.scalar(select(Project).where(Project.id == project_id).with_for_update())
+    if not project:
+        raise HTTPException(404, "Объект не найден.")
+    contractor = db.get(User, data.contractor_id)
+    if not contractor or contractor.role != "contractor" or not contractor.is_active:
+        raise HTTPException(422, "Выберите действующего субподрядчика.")
+    if project.contractor_id != contractor.id and db.scalar(select(CleaningRun.id).where(CleaningRun.project_id == project_id, CleaningRun.completed_at.is_(None), CleaningRun.cancelled_at.is_(None))):
+        raise HTTPException(409, "Сначала завершите текущие уборки объекта.")
+    project.contractor_id = contractor.id
+    db.commit()
+    return project_output(db, user, project)
+
+
+class ZoneInput(VisitInput):
+    zone: str = Field(min_length=2, max_length=200)
+
+
+class RunInput(StrictModel):
+    name: str = Field(min_length=2, max_length=200)
+    assignments: list[ZoneInput] = Field(min_length=1, max_length=100)
+
+
+@router.post("/projects/{project_id}/runs", status_code=201)
+def create_run(project_id: str, data: RunInput, user: CurrentUser, db: Db):
+    db.scalar(select(Project).where(Project.id == project_id).with_for_update())
+    project = project_access(db, user, project_id)
+    if user.role != "contractor" or project.contractor_id != user.id:
+        raise HTTPException(403, "График составляет закреплённый субподрядчик.")
+    if project.status in {"paused", "completed"}:
+        raise HTTPException(409, "Обслуживание объекта приостановлено.")
+    run = CleaningRun(id=str(uuid4()), project_id=project_id, contractor_id=user.id, name=data.name, created_at=utcnow())
+    db.add(run)
+    db.flush()
+    # Stable worker lock ordering also protects against simultaneous schedules on other objects.
+    workers = {w.id: w for w in db.scalars(select(User).where(User.id.in_([a.worker_id for a in data.assignments])).order_by(User.id).with_for_update())}
+    for item in data.assignments:
+        worker = workers.get(item.worker_id)
+        if not worker or worker.role != "worker" or worker.contractor_id != user.id or not worker.is_active:
+            raise HTTPException(422, "Назначьте действующего работника вашей команды.")
+        if (project.service_start and item.planned_start.astimezone(LOCAL).date() < project.service_start) or (project.service_end and item.planned_end.astimezone(LOCAL).date() > project.service_end):
+            raise HTTPException(422, "Задание выходит за период обслуживания.")
+        existing = list(db.scalars(select(Visit).where(Visit.worker_id == worker.id, Visit.status != "cancelled", Visit.planned_end > item.planned_start - timedelta(days=8), Visit.planned_start < item.planned_end + timedelta(days=8))))
+        validate_schedule(existing, item, project_id)
+        db.add(Visit(id=str(uuid4()), project_id=project_id, run_id=run.id, zone=item.zone,
+            worker_id=worker.id, planned_start=item.planned_start, planned_end=item.planned_end,
+            checklist=[{"text": s, "done": False} for s in item.checklist], notes="", status="planned", history=[event(user, "planned", item.zone)]))
+        db.flush()
+    db.commit()
+    return {"id": run.id}
+
+
+@router.post("/runs/{run_id}/complete")
+def complete_run(run_id: str, user: CurrentUser, db: Db):
+    run = db.scalar(select(CleaningRun).where(CleaningRun.id == run_id).with_for_update())
+    if not run:
+        raise HTTPException(404, "Уборка не найдена.")
+    project_access(db, user, run.project_id)
+    if user.role != "contractor" or run.contractor_id != user.id:
+        raise HTTPException(403, "Клининг подтверждает субподрядчик.")
+    if run.cancelled_at:
+        raise HTTPException(409, "Уборка отменена. Создайте новый план.")
+    if run.completed_at:
+        return {"completed_at": run.completed_at}
+    visits = list(db.scalars(select(Visit).where(Visit.run_id == run.id).with_for_update()))
+    active = [v for v in visits if v.status != "cancelled"]
+    if not active or any(v.status != "submitted" for v in active):
+        raise HTTPException(409, "Все зоны должны быть выполнены и отправлены с фотоотчётами.")
+    for visit in active:
+        visit.status = "accepted"
+        visit.history = [*visit.history, event(user, "accept", "Клининг объекта подтверждён")]
+    run.completed_at = utcnow()
+    db.commit()
+    return {"completed_at": run.completed_at}

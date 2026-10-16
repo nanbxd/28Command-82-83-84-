@@ -37,6 +37,7 @@ function ThreadBody({ complaint: c, reload }: { complaint: Complaint; reload: ()
   const project = useResource<ProjectDetail>(`/projects/${c.project_id}`);
   const [status, setStatus] = useState(c.status); const [forward, setForward] = useState(c.forwarded_to || ''); const [text, setText] = useState('');
   const workers = Array.from(new Map(project.data?.visits.map(v => [v.worker_id, v.worker_name])).entries());
+  if (project.data?.contractor_id) workers.unshift([project.data.contractor_id, `${project.data.contractor_name} · субподрядчик`]);
   return <div className="portal-form"><Badge tone={c.status === 'closed' ? 'green' : 'amber'}>{complaintLabels[c.status]}</Badge><p className="portal-prewrap">{c.message}</p><p className="portal-muted">Получено {time(c.created_at)} · {c.forwarded_to ? 'Передано назначенному исполнителю' : 'Рассматривает IC Group'}</p>
     {project.data ? <Photos files={project.data.files.filter(f => f.complaint_id === c.id)} /> : <LoadState error={project.error} retry={project.reload} />}
     <ul className="portal-thread">{c.history.filter(h => h.action === 'reply').map((h, i) => <li key={i}><div><strong>{h.actor}</strong><time>{time(h.at)}</time></div><p>{h.text}</p>{h.status && <small>{complaintLabels[h.status]}</small>}</li>)}</ul>

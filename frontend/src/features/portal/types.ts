@@ -1,6 +1,7 @@
 import type { RequestRecord } from '../request/types';
 export type HistoryEvent = { at: string; actor: string; action: string; text: string; status?: string; forwarded_to?: string | null };
 export type Project = {
+  contractor_id: string | null; contractor_name: string | null;
   id: string; request_id: string; name: string; company: string;
   details: RequestRecord['payload']['objects'][number]; status: string; plan: string;
   contract_number?: string; contract_start?: string | null; contract_end?: string | null;
@@ -8,13 +9,14 @@ export type Project = {
   last_cleaning: string | null; next_cleaning: string | null; cleaning_now: boolean;
 };
 export type Visit = {
+  run_id: string | null; zone: string;
   id: string; project_id: string; worker_id: string; worker_name: string;
   planned_start: string; planned_end: string; actual_start: string | null; actual_end: string | null;
   status: string; checklist: { text: string; done: boolean }[]; notes: string; history: HistoryEvent[];
 };
 export type ServiceFile = { id: string; project_id: string; visit_id: string | null; complaint_id: string | null;
   kind: string; name: string; size: number; uploaded_at: string; content_type: string; period: string; state: string; history: HistoryEvent[] };
-export type ProjectDetail = Project & { visits: Visit[]; files: ServiceFile[] };
+export type ProjectDetail = Project & { runs: { id: string; name: string; completed_at: string | null; cancelled_at: string | null }[]; visits: Visit[]; files: ServiceFile[] };
 export type Account = { id: string; name: string; email: string; phone: string; company: string; role: string; is_active: boolean };
 export type Complaint = { id: string; project_id: string; project_name: string; company: string; subject: string; message: string;
   status: string; forwarded_to: string | null; history: HistoryEvent[]; created_at: string };

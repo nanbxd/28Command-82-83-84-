@@ -10,6 +10,7 @@ class Project(Base):
     __tablename__ = "projects"
     __table_args__ = (UniqueConstraint("request_id", "object_index", name="uq_project_request_object"),)
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    contractor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     request_id: Mapped[str] = mapped_column(ForeignKey("service_requests.id"), index=True)
     object_index: Mapped[int] = mapped_column(Integer)
     organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
@@ -30,6 +31,8 @@ class Project(Base):
 class Visit(Base):
     __tablename__ = "visits"
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    run_id: Mapped[str | None] = mapped_column(ForeignKey("cleaning_runs.id"), nullable=True, index=True)
+    zone: Mapped[str] = mapped_column(String(200), default="", server_default="")
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
     worker_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     planned_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -40,6 +43,17 @@ class Visit(Base):
     checklist: Mapped[list] = mapped_column(JSON)
     notes: Mapped[str] = mapped_column(String(5000), default="")
     history: Mapped[list] = mapped_column(JSON)
+
+
+class CleaningRun(Base):
+    __tablename__ = "cleaning_runs"
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    contractor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class StoredFile(Base):

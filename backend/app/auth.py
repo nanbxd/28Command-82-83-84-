@@ -36,6 +36,10 @@ def current_user(db: Db, credentials: Credentials) -> User:
     token_hash = digest(credentials.credentials) if credentials else ""
     user = db.scalar(select(User).join(AuthSession, AuthSession.user_id == User.id).where(
         AuthSession.token_hash == token_hash, AuthSession.expires_at > utcnow(), User.is_active.is_(True)))
+    if user and user.contractor_id:
+        parent = db.get(User, user.contractor_id)
+        if not parent or not parent.is_active:
+            user = None
     if not user:
         raise HTTPException(401, "Войдите в аккаунт, чтобы отправить заявку.", headers={"WWW-Authenticate": "Bearer"})
     return user
@@ -113,6 +117,10 @@ def login(data: LoginInput, request: Request, response: Response, db: Db):
     throttle(db, request, data.email)
     user = db.scalar(select(User).where(User.email == data.email))
     valid = password_hasher.verify(data.password, user.password_hash if user else dummy_hash)
+    if user and user.contractor_id:
+        parent = db.get(User, user.contractor_id)
+        if not parent or not parent.is_active:
+            user = None
     if not user or not valid or not user.is_active:
         raise HTTPException(401, "Неверный email или пароль.")
     return make_session(db, user, response)

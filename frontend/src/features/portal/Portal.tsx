@@ -9,7 +9,7 @@ import './portal.css';
 import '../admin/admin.css';
 
 export const isStaff = (role?: string) => role === 'manager' || role === 'superadmin';
-export const portalBase = (role?: string) => isStaff(role) ? '/admin' : role === 'worker' ? '/work' : '/cabinet';
+export const portalBase = (role?: string) => isStaff(role) ? '/admin' : role === 'contractor' ? '/contractor' : role === 'worker' ? '/work' : '/cabinet';
 
 export function useResource<T>(path: string) {
   const auth = useAuth();
@@ -53,7 +53,7 @@ export function Empty({ title, children }: { title: string; children: ReactNode 
   return <section className="portal-empty"><Building2 size={30} aria-hidden="true" /><h2>{title}</h2>{children}</section>;
 }
 
-export default function Portal({ audience }: { audience: 'staff' | 'client' | 'worker' }) {
+export default function Portal({ audience }: { audience: 'staff' | 'client' | 'worker' | 'contractor' }) {
   const auth = useAuth();
   const location = useLocation();
   const [login, setLogin] = useState(false);
@@ -70,14 +70,14 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
     { href: `${base}/projects`, label: audience === 'worker' ? 'Мои объекты и уборки' : 'Объекты', icon: Building2 },
     ...(audience === 'client' ? [{ href: '/requests', label: 'Мои заявки', icon: Inbox }] : []),
     { href: `${base}/complaints`, label: 'Обращения по качеству', icon: MessageSquareText },
-    ...(auth.user?.role === 'superadmin' ? [{ href: '/admin/accounts', label: 'Аккаунты сотрудников', icon: UsersRound }] : []),
+    ...(['superadmin', 'manager', 'contractor'].includes(auth.user?.role || '') ? [{ href: `${base}/accounts`, label: audience === 'contractor' ? 'Моя команда' : 'Аккаунты сотрудников', icon: UsersRound }] : []),
   ];
   return <div className="ic-admin portal"><a className="ad-skip" href="#portal-content">К содержимому кабинета</a>
     <aside className="ad-sidebar"><Link to={base} className="ad-brand" aria-label="IC Group — кабинет"><img src="/brand/ic-group.png" alt="IC Group" /><span>Сервис.<br />Люди. Качество.</span></Link>
       <div className="ad-sidebar-label">{audience === 'staff' ? 'Управление сервисом' : audience === 'worker' ? 'Рабочее пространство' : 'Личный кабинет'}</div>
       <nav className="ad-navigation" aria-label="Разделы кабинета">{navigation.map(({ href, label, icon: Icon }) => <NavLink key={href} to={href} className={({ isActive }) => `ad-nav-link ${isActive ? 'is-active' : ''}`}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
       <div className="ad-sidebar-bottom"><Link to="/">Новая заявка <ArrowUpRight size={15} /></Link><a href="https://www.ic-group.kz/" target="_blank" rel="noreferrer">Основной сайт <ArrowUpRight size={15} /></a></div>
-    </aside><div className="ad-workspace"><header className="ad-topbar"><strong>{audience === 'staff' ? 'Кабинет IC Group' : audience === 'worker' ? 'Кабинет работника' : auth.user?.company}</strong><div className="portal-account"><span>{auth.user?.name}<small>{auth.user?.role === 'superadmin' ? 'Суперадминистратор' : audience === 'staff' ? 'Администратор' : audience === 'worker' ? 'Работник' : 'Клиент'}</small></span><button className="ad-button" aria-label="Выйти из аккаунта" disabled={action.busy} onClick={() => void action.run(auth.logout, '')}><LogOut size={17} /></button></div></header>
+    </aside><div className="ad-workspace"><header className="ad-topbar"><strong>{audience === 'staff' ? 'Кабинет IC Group' : audience === 'worker' ? 'Кабинет работника' : auth.user?.company}</strong><div className="portal-account"><span>{auth.user?.name}<small>{auth.user?.role === 'superadmin' ? 'Суперадминистратор' : audience === 'staff' ? 'Администратор' : audience === 'worker' ? 'Работник' : audience === 'contractor' ? 'Субподрядчик' : 'Клиент'}</small></span><button className="ad-button" aria-label="Выйти из аккаунта" disabled={action.busy} onClick={() => void action.run(auth.logout, '')}><LogOut size={17} /></button></div></header>
       <main id="portal-content" className="ad-main" tabIndex={-1}>{action.feedback}<Outlet key={auth.user?.id} /></main>
       <footer className="portal-footer">IC Group · Управление качеством <span>Время: Казахстан, UTC+5</span></footer></div>
   </div>;

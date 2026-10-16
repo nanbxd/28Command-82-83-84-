@@ -17,6 +17,7 @@ class Organization(Base):
 class User(Base):
     __tablename__ = "users"
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    contractor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
     email: Mapped[str] = mapped_column(String(254), unique=True)
     password_hash: Mapped[str] = mapped_column(String(300))
