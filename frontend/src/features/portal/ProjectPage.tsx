@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CalendarPlus, ArrowLeft, Pencil, MessageSquarePlus } from 'lucide-react';
+import { ArrowLeft, Pencil, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { api } from '../../lib/api';
 import { Badge, Drawer, Fact, Facts } from '../admin/components';
 import { week } from '../request/types';
 import { Empty, isStaff, LoadState, PageHeading, portalBase, useAction, useResource } from './Portal';
-import { date, documentLabels, fileLabels, projectLabels, time, visitLabels, type Account, type ProjectDetail, type ServiceFile, type Visit } from './types';
+import { date, documentLabels, fileLabels, projectLabels, time, visitLabels, type ProjectDetail, type ServiceFile, type Visit } from './types';
 import { DownloadFile, Photos, UploadFile } from './Files';
 import { ContractorPanel } from './ContractorPanel';
 import { ComplaintForm } from './Complaints';
@@ -24,14 +24,13 @@ export default function ProjectPage() {
     <PageHeading title={p.name} text={`${p.company} · ${p.details.city}, ${p.details.address}`}><Badge tone={p.status === 'active' ? 'green' : 'neutral'}>{projectLabels[p.status]}</Badge></PageHeading>
     {resource.error && <LoadState error={resource.error} retry={resource.reload} />}
     <section className="portal-key-facts"><div><span>Сейчас на объекте</span><strong>{p.cleaning_now ? 'Идёт уборка' : 'Нет текущей уборки'}</strong></div><div><span>Последняя уборка</span><strong>{time(p.last_cleaning)}</strong></div><div><span>Следующая уборка</span><strong>{p.next_cleaning ? time(p.next_cleaning) : 'Пока не назначена'}</strong></div></section>
-    <div className="portal-actions">{staff && <>{!p.contractor_id && <button className="ad-button ad-button-primary" onClick={() => setDialog('schedule')}><CalendarPlus size={17} />Назначить уборку</button>}<button className="ad-button" onClick={() => setDialog('edit')}><Pencil size={16} />Изменить условия</button></>}{user?.role === 'client' && <button className="ad-button" onClick={() => setDialog('complaint')}><MessageSquarePlus size={17} />Сообщить о качестве</button>}<button className="ad-button" onClick={resource.reload}>Обновить данные</button></div>
+    <div className="portal-actions">{staff && <><button className="ad-button" onClick={() => setDialog('edit')}><Pencil size={16} />Изменить условия</button></>}{user?.role === 'client' && <button className="ad-button" onClick={() => setDialog('complaint')}><MessageSquarePlus size={17} />Сообщить о качестве</button>}<button className="ad-button" onClick={resource.reload}>Обновить данные</button></div>
     <ContractorPanel project={p} reload={resource.reload} />
     <nav className="portal-tabs" aria-label="Информация об объекте">{[['visits', 'Уборки и фотоотчёты'], ['plan', 'План и условия'], ...(!worker ? [['documents', 'Договоры и АВР']] : [])].map(([key, label]) => <button key={key} aria-current={tab === key ? 'page' : undefined} onClick={() => setTab(key)}>{label}</button>)}</nav>
-    {tab === 'visits' && <><p className="portal-muted portal-help">Время начала и завершения фиксирует сервер. Время получения фотографии может отличаться от времени съёмки.</p>{p.visits.length ? <div className="portal-visits">{p.visits.map((v, i) => <details className="portal-visit" key={v.id} open={i === 0}><summary><span><strong>{v.zone ? `${v.zone} · ` : ''}{time(v.planned_start)}</strong><span>{v.worker_name} · до {time(v.planned_end)}</span></span><Badge tone={v.status === 'accepted' ? 'green' : v.status === 'correction' ? 'amber' : 'neutral'}>{visitLabels[v.status]}</Badge></summary><VisitReport key={`${v.id}-${v.status}-${v.history.length}`} visit={v} files={p.files.filter(f => f.visit_id === v.id)} reload={resource.reload} /></details>)}</div> : <Empty title="Уборки ещё не назначены"><p>{staff ? 'Назначьте работника, время и обязанности для первой уборки.' : 'Здесь появятся расписание, выполненный чек-лист и фотографии.'}</p></Empty>}</>}
+    {tab === 'visits' && <><p className="portal-muted portal-help">Время начала и завершения фиксирует сервер. Время получения фотографии может отличаться от времени съёмки.</p>{p.visits.length ? <div className="portal-visits">{p.visits.map((v, i) => <details className="portal-visit" key={v.id} open={i === 0}><summary><span><strong>{v.zone ? `${v.zone} · ` : ''}{time(v.planned_start)}</strong><span>{v.worker_name} · до {time(v.planned_end)}</span></span><Badge tone={v.status === 'accepted' ? 'green' : v.status === 'correction' ? 'amber' : 'neutral'}>{visitLabels[v.status]}</Badge></summary><VisitReport key={`${v.id}-${v.status}-${v.history.length}`} visit={v} files={p.files.filter(f => f.visit_id === v.id)} reload={resource.reload} /></details>)}</div> : <Empty title="Уборки ещё не назначены"><p>{staff ? (p.contractor_id ? 'Закреплённый субподрядчик назначит работников и график уборок.' : 'Закрепите субподрядчика за объектом. Он составит график уборок.') : 'Здесь появятся расписание, выполненный чек-лист и фотографии.'}</p></Empty>}</>}
     {tab === 'plan' && <section className="portal-panel portal-reading"><h2>План работ</h2><p className="portal-prewrap">{p.plan || 'План ещё не опубликован. IC Group добавит согласованный состав работ.'}</p><Facts><Fact label="Период оказания услуг">{date(p.service_start)} — {date(p.service_end)}</Fact><Fact label="Площадь">{p.details.area_sqm.toLocaleString('ru-RU')} м²</Fact><Fact label="Запрошенный график">{p.details.base_schedule.days.map(d => week[d - 1]).join(', ')} · с {p.details.base_schedule.start_time}, {p.details.base_schedule.duration_hours} ч</Fact><Fact label="Пожелания клиента">{p.details.notes || 'Не указаны'}</Fact></Facts><p className="portal-muted">Конкретные даты и исполнители указаны в разделе уборок.</p>{!worker && <><h2>Условия договора</h2><Facts><Fact label="Договор">{p.contract_number || 'Ещё не оформлен'}</Fact><Fact label="Срок действия договора">{date(p.contract_start)} — {date(p.contract_end)}</Fact><Fact label="Согласованная цена за месяц с НДС">{p.price != null ? `${Number(p.price).toLocaleString('ru-RU')} ₸` : 'Не установлена'}</Fact><Fact label="Условия оплаты">{p.payment_terms || 'Не указаны'}</Fact></Facts><p className="portal-muted">Подписанные условия и приложения находятся в разделе документов.</p></>}</section>}
     {tab === 'documents' && !worker && <Documents project={p} reload={resource.reload} />}
     {dialog === 'edit' && <Drawer title="Условия обслуживания" eyebrow={p.name} close={() => setDialog('')}><ProjectForm project={p} onSaved={saved} /></Drawer>}
-    {dialog === 'schedule' && <Drawer title="Назначить уборку" eyebrow={p.name} close={() => setDialog('')}><ScheduleForm project={p} onSaved={saved} /></Drawer>}
     {dialog === 'complaint' && <Drawer title="Обращение по качеству" eyebrow={p.name} close={() => setDialog('')}><ComplaintForm projectId={p.id} /></Drawer>}
   </>;
 }
@@ -52,23 +51,8 @@ function ProjectForm({ project: p, onSaved }: { project: ProjectDetail; onSaved:
     <label className="field">Условия оплаты<textarea name="payment_terms" maxLength={2000} defaultValue={p.payment_terms} /></label>{action.feedback}<button className="ad-button ad-button-primary" disabled={action.busy}>Сохранить условия</button></form>;
 }
 
-function ScheduleForm({ project, onSaved }: { project: ProjectDetail; onSaved: () => void }) {
-  const workers = useResource<Account[]>('/staff/workers'); const action = useAction();
-  if (!workers.data) return <LoadState error={workers.error} retry={workers.reload} />;
-  if (!workers.data.length) return <Empty title="Сначала нужен аккаунт работника"><p>Суперадминистратор создаёт его в разделе «Аккаунты сотрудников».</p></Empty>;
-  return <form className="portal-form" onSubmit={async e => {
-    e.preventDefault(); const raw = Object.fromEntries(new FormData(e.currentTarget));
-    const data = { worker_id: raw.worker_id, planned_start: `${raw.start}:00+05:00`, planned_end: `${raw.end}:00+05:00`, checklist: String(raw.checklist).split('\n').map(s => s.trim()).filter(Boolean) };
-    if (await action.run(() => api(`/staff/projects/${project.id}/visits`, { method: 'POST', body: JSON.stringify(data) }))) onSaved();
-  }}><label className="field">Работник<select name="worker_id" aria-label="Работник" required>{workers.data.map(w => <option value={w.id} key={w.id}>{w.name} · {w.email}</option>)}</select></label>
-    <p className="portal-muted">Время Казахстана, UTC+5. Система проверит пересечения, переходы между объектами и время отдыха.</p>
-    <label className="field">Начало уборки<input type="datetime-local" name="start" required /></label><label className="field">Окончание уборки<input type="datetime-local" name="end" required /></label>
-    <label className="field">Обязанности · каждый пункт с новой строки<textarea name="checklist" rows={6} required maxLength={30000} placeholder="Укажите согласованные работы для этой уборки" /></label>
-    {action.feedback}<button className="ad-button ad-button-primary" disabled={action.busy}>Сохранить назначение</button></form>;
-}
-
 function VisitReport({ visit: v, files, reload }: { visit: Visit; files: ServiceFile[]; reload: () => void }) {
-  const { user } = useAuth(); const staff = v.run_id ? user?.role === 'contractor' : isStaff(user?.role); const canWork = v.run_id ? user?.role === 'worker' : staff || user?.role === 'worker';
+  const { user } = useAuth(); const staff = Boolean(v.run_id) && user?.role === 'contractor'; const canWork = user?.role === 'worker';
   const action = useAction(); const [checked, setChecked] = useState(v.checklist.flatMap((item, i) => item.done ? [i] : []));
   const [notes, setNotes] = useState(v.notes); const [reason, setReason] = useState('');
   const editable = canWork && ['in_progress', 'correction'].includes(v.status);

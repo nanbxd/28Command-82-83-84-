@@ -17,7 +17,7 @@ async function capture(page: Page, name: string) {
   const count = await photos.count();
   if (count) {
     await expect(photos.locator('img')).toHaveCount(count);
-    await expect.poll(() => photos.locator('img').evaluateAll(images => images.every(img => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0))).toBeTruthy();
+    await expect.poll(() => photos.locator('img').evaluateAll(images => images.every(img => { (img as HTMLImageElement).loading = 'eager'; return (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0; }))).toBeTruthy();
   }
   await page.evaluate(async () => { await document.fonts.ready; (document.activeElement as HTMLElement)?.blur(); window.scrollTo({ top: 0, behavior: 'instant' }); });
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
@@ -56,7 +56,7 @@ test('real accounts, request to object, worker photos, client documents and comp
   const suffix = Date.now(); const adminEmail = `ops-admin-${suffix}@example.com`; const workerEmail = `ops-worker-${suffix}@example.com`;
   const complaintTitle = `Проверка обработки замечания ${suffix}`;
   await session(page, rootSession.access_token); await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/admin/accounts');
-  for (const [role, email, name] of [['manager', adminEmail, 'Администратор проверки'], ['worker', workerEmail, 'Работник проверки']]) {
+  for (const [role, email, name] of [['manager', adminEmail, 'Администратор проверки']]) {
     await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
     const dialog = page.getByRole('dialog'); await dialog.getByLabel('Роль', { exact: true }).selectOption(role);
     if (role === 'manager') await capture(page, 'operations-account-form.png');
@@ -71,7 +71,16 @@ test('real accounts, request to object, worker photos, client documents and comp
     const box = await button.boundingBox(); expect(box).not.toBeNull(); expect(box!.x).toBeGreaterThanOrEqual(0); expect(box!.x + box!.width).toBeLessThanOrEqual(390);
   }
   const login = async (email: string) => { const r = await request.post(`${api}/api/v1/auth/login`, { data: { email, password } }); expect(r.status()).toBe(200); return r.json(); };
-  const admin = await login(adminEmail); const worker = await login(workerEmail);
+  const admin = await login(adminEmail);
+  const contractorEmail = `ops-contractor-${suffix}@example.com`;
+  const createAccount = async (token: string, role: string, email: string) => {
+    const response = await request.post(`${api}/api/v1/staff/accounts`, { headers: { Authorization: `Bearer ${token}` }, data: { role, email, password, name: 'Исполнитель проверки', phone: '+77001234567', company: 'Проверка обслуживания' } });
+    expect(response.status()).toBe(201);
+  };
+  await createAccount(admin.access_token, 'contractor', contractorEmail);
+  const contractor = await login(contractorEmail);
+  await createAccount(contractor.access_token, 'worker', workerEmail);
+  const worker = await login(workerEmail);
   const clientResponse = await request.post(`${api}/api/v1/auth/register`, { data: { email: `ops-client-${suffix}@example.com`, password, name: 'Клиент проверки', phone: '+77001234567', company: 'Компания проверки обслуживания' } });
   expect(clientResponse.status()).toBe(201); const client = await clientResponse.json();
   const schedule = { days: [1, 3, 5], start_time: '08:00', duration_hours: 2 };
@@ -91,9 +100,11 @@ test('real accounts, request to object, worker photos, client documents and comp
     await conditions.getByLabel('Статус объекта').selectOption('active'); await conditions.getByLabel('План работ').fill('Уборка полов и санузлов. Контроль качества после каждой смены.');
     await conditions.getByLabel('Номер договора').fill('TEST-2026'); await conditions.getByLabel('Цена за месяц с НДС, ₸').fill('120000'); await conditions.getByLabel('Условия оплаты').fill('По согласованному договору');
     await conditions.getByRole('button', { name: 'Сохранить условия' }).click(); await expect(conditions).not.toBeVisible();
-    await staff.getByRole('button', { name: 'Назначить уборку', exact: true }).click(); const appointment = staff.getByRole('dialog');
-    await appointment.getByLabel('Работник', { exact: true }).selectOption(worker.user.id); await appointment.getByLabel('Начало уборки').fill(localInput(-1)); await appointment.getByLabel('Окончание уборки').fill(localInput(59)); await appointment.getByLabel('Обязанности').fill('Убрать полы\nУбрать санузлы');
-    await appointment.getByRole('button', { name: 'Сохранить назначение' }).click(); await expect(appointment).not.toBeVisible();
+    await expect(staff.getByRole('button', { name: 'Назначить уборку', exact: true })).toHaveCount(0);
+    const assigned = await request.put(`${api}/api/v1/staff/projects/${projectId}/contractor`, { headers: { Authorization: `Bearer ${admin.access_token}` }, data: { contractor_id: contractor.user.id } });
+    expect(assigned.status()).toBe(200);
+    const planned = await request.post(`${api}/api/v1/projects/${projectId}/runs`, { headers: { Authorization: `Bearer ${contractor.access_token}` }, data: { name: 'Проверка уборки', assignments: [{ zone: 'Полы и санузлы', worker_id: worker.user.id, planned_start: `${localInput(-1)}:00+05:00`, planned_end: `${localInput(59)}:00+05:00`, checklist: ['Убрать полы', 'Убрать санузлы'] }] } });
+    expect(planned.status()).toBe(201); const cleaningRun = await planned.json();
     const executor = await workerContext.newPage(); await session(executor, worker.access_token); await executor.goto(`/work/projects/${projectId}`);
     const upload = async (who: Page, label: RegExp) => { const input = who.getByLabel(label); await input.setInputFiles(photo); const form = input.locator('xpath=ancestor::form'); await form.getByRole('button', { name: 'Загрузить файл' }).click(); await expect(form.getByRole('status')).toContainText('Файл сохранён.'); };
     await upload(executor, /^До уборки ·/); await executor.getByRole('button', { name: 'Начать уборку', exact: true }).click();
@@ -102,7 +113,7 @@ test('real accounts, request to object, worker photos, client documents and comp
     await upload(executor, /^После уборки ·/); await expect(executor.getByLabel('Убрать полы', { exact: true })).toBeChecked();
     await capture(executor, 'operations-worker-mobile.png');
     await executor.getByRole('button', { name: 'Завершить и отправить отчёт' }).click(); await expect(executor.getByText('Отчёт на проверке', { exact: true })).toBeVisible(); await noOverflow(executor);
-    await staff.reload(); await staff.getByRole('button', { name: 'Принять отчёт', exact: true }).click(); await expect(staff.getByText('Отчёт принят', { exact: true }).first()).toBeVisible();
+    expect((await request.post(`${api}/api/v1/runs/${cleaningRun.id}/complete`, { headers: { Authorization: `Bearer ${contractor.access_token}` } })).status()).toBe(200); await staff.reload(); await expect(staff.getByRole('button', { name: 'Принять отчёт', exact: true })).toHaveCount(0); await expect(staff.getByText('Отчёт принят', { exact: true }).first()).toBeVisible();
     await staff.getByRole('button', { name: 'Договоры и АВР' }).click(); await staff.getByLabel(/^Договор · PDF/).setInputFiles({ name: 'Договор проверки.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\nIntegration test document\n%%EOF') });
     await staff.getByRole('button', { name: 'Загрузить файл' }).click(); await expect(staff.getByRole('heading', { name: 'Договор проверки.pdf' })).toBeVisible();
     const customer = await clientContext.newPage(); await session(customer, client.access_token); await customer.goto(`/cabinet/projects/${projectId}`);

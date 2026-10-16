@@ -234,25 +234,7 @@ def validate_schedule(existing, data, project_id):
 
 @router.post("/staff/projects/{project_id}/visits", status_code=201)
 def schedule_visit(project_id: str, data: VisitInput, user: Manager, db: Db):
-    project = project_access(db, user, project_id)
-    if project.contractor_id:
-        raise HTTPException(409, "Задания на закреплённом объекте создаёт субподрядчик.")
-    if project.status in {"paused", "completed"}:
-        raise HTTPException(409, "Возобновите обслуживание перед назначением уборки.")
-    worker = db.scalar(select(User).where(User.id == data.worker_id).with_for_update())
-    if not worker or worker.role != "worker" or not worker.is_active:
-        raise HTTPException(422, "Выберите действующего работника.")
-    if project.service_start and data.planned_start.astimezone(LOCAL).date() < project.service_start or project.service_end and data.planned_end.astimezone(LOCAL).date() > project.service_end:
-        raise HTTPException(422, "Уборка выходит за период оказания услуг.")
-    existing = list(db.scalars(select(Visit).where(Visit.worker_id == worker.id, Visit.status != "cancelled",
-        Visit.planned_end > data.planned_start - timedelta(days=8), Visit.planned_start < data.planned_end + timedelta(days=8))))
-    validate_schedule(existing, data, project_id)
-    row = Visit(id=str(uuid4()), project_id=project_id, worker_id=worker.id,
-        planned_start=data.planned_start, planned_end=data.planned_end,
-        checklist=[{"text": s, "done": False} for s in data.checklist], notes="", status="planned", history=[event(user, "planned")])
-    db.add(row)
-    db.commit()
-    return visit_output(db, row)
+    raise HTTPException(403, "Уборки назначает субподрядчик в своём кабинете. Администратор закрепляет его за объектом.")
 
 
 class VisitAction(StrictModel):
@@ -263,6 +245,8 @@ class VisitAction(StrictModel):
 
 @router.post("/visits/{visit_id}/actions")
 def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
+    if user.role in STAFF:
+        raise HTTPException(403, "Администратор просматривает историю. Заданиями управляет субподрядчик.")
     row = visit_access(db, user, visit_id, lock=True)
     if user.role == "contractor" and not row.run_id:
         raise HTTPException(403, "Ранее созданными назначениями управляет IC Group.")
@@ -395,7 +379,7 @@ async def upload_file(project_id: str, request: Request, user: CurrentUser, db: 
         visit = visit_access(db, user, visit_id, lock=True)
         if visit.run_id and user.id != visit.worker_id:
             raise HTTPException(403, "Фотоконтроль загружает назначенный работник.")
-        if visit.project_id != project_id or user.role not in STAFF | {"worker"} or complaint_id:
+        if visit.project_id != project_id or user.role != "worker" or complaint_id:
             raise HTTPException(403, "Нет доступа к загрузке отчёта.")
         if visit.status not in ({"planned", "in_progress", "correction"} if kind == "before" else {"in_progress", "correction"}):
             raise HTTPException(409, "Фото нельзя добавить на этом этапе уборки.")

@@ -19,7 +19,7 @@ from .accounts import router as accounts_router
 app = FastAPI(title="IC Group Client API", version="0.1.0")
 app.add_middleware(CORSMiddleware,
     allow_origins=[origin.strip() for origin in get_settings().frontend_origin.split(",")],
-    allow_credentials=False, allow_methods=["GET", "POST", "PATCH"], allow_headers=["Accept", "Content-Type", "Authorization"],
+    allow_credentials=False, allow_methods=["GET", "POST", "PUT", "PATCH"], allow_headers=["Accept", "Content-Type", "Authorization"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(auth_router)
