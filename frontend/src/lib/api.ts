@@ -20,7 +20,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     const token = getToken();
     const response = await fetch(`${base}/api/v1${path}`, {
       ...options, signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
+      headers: { ...(options.body instanceof Blob ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
     });
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
@@ -29,6 +29,14 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     return response.status === 204 ? undefined as T : response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError('Не удалось связаться с сервером. Данные сохранены — попробуйте ещё раз.', 0);
+    throw new ApiError('Не удалось связаться с сервером. Проверьте соединение и повторите действие.', 0);
   } finally { clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
+}
+
+export async function fileBlob(id: string, signal?: AbortSignal): Promise<Blob> {
+  const response = await fetch(`${base}/api/v1/files/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${getToken() || ''}` }, signal,
+  });
+  if (!response.ok) throw new ApiError(response.status === 401 ? 'Сеанс завершён. Войдите снова.' : 'Не удалось открыть файл. Попробуйте ещё раз.', response.status);
+  return response.blob();
 }

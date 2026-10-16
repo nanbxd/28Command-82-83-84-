@@ -44,8 +44,6 @@
 .ad-breadcrumb { display: flex; gap: 14px; align-items: center; font-size: 11px; color: #8b928c; }
 .ad-breadcrumb strong { color: #5f675e; font-weight: 500; }
 .ad-topbar-right { display: flex; align-items: center; gap: 24px; }
-.ad-demo-tag { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #63714e; border: 1px solid #e6eddc; background: #f7faef; padding: 5px 9px; border-radius: 5px; white-space: nowrap; }
-.ad-demo-tag > span, .ad-small-dot { width: 5px; height: 5px; border-radius: 50%; background: #81ac42; display: inline-block; }
 .ad-bell { position: relative; padding: 9px; display: flex; color: #656e65 !important; border-radius: 6px; }
 .ad-bell:hover { background: #f2f5ed; }
 .ad-bell i { position: absolute; width: 6px; height: 6px; background: #85b83d; border: 1px solid #fff; border-radius: 50%; top: 7px; right: 8px; }
@@ -59,9 +57,6 @@
 .ad-page-heading h1 { font-size: clamp(28px, 2.6vw, 39px); line-height: 1.4; font-weight: 650; margin-top: 8px; }
 .ad-page-heading h1 > span { color: #83b43c; }
 .ad-page-heading p { color: #7b8279; margin-top: 8px; font-size: 12px; }
-.ad-demo-date { display: flex; align-items: center; gap: 10px; color: #60695c; font-size: 11px; font-weight: 550; }
-.ad-demo-date svg { color: #7b8574; }
-.ad-demo-date span { display: block; font-size: 9px; color: #92998c; font-weight: 400; margin-top: 3px; }
 .ad-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; margin-bottom: 36px; }
 .ad-metric { display: block; background: #fff; border: 1px solid #e5e9e0; border-radius: 11px; padding: 20px 22px 21px; }
 .ad-metric:hover { border-color: #a5c27a; }
@@ -176,6 +171,7 @@
 .ad-drawer::backdrop { background: #1a241a66; }
 .ad-drawer-header { padding: 27px 30px; border-bottom: 1px solid var(--ad-line); display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; position: sticky; top: 0; background: #fff; z-index: 2; }
 .ad-drawer-header h2 { font-size: 22px; line-height: 1.5; font-weight: 650; margin-top: 6px; }
+.ad-drawer-context { margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--muted, #626861); overflow-wrap: anywhere; }
 .ad-icon-button { display: inline-grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 1px solid #e3e8dd; border-radius: 7px; background: #fff; color: #738169; }
 .ad-icon-button:hover { background: #f1f5eb; }
 .ad-drawer-body { padding: 24px 30px 40px; font-size: 12px; }
@@ -318,15 +314,12 @@
   .ad-topbar { height: auto; min-height: 60px; padding: 10px 17px; }
   .ad-breadcrumb { display: none; }
   .ad-topbar-right { width: 100%; gap: 10px; flex-wrap: wrap; }
-  .ad-demo-tag { margin-right: auto; font-size: 9px; }
   .ad-account { padding-left: 15px; }
   .ad-account > div { display: none; }
   .ad-main { padding: 27px 16px 20px; }
   .ad-page-heading { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 22px; }
   .ad-page-heading h1 { font-size: 29px; }
   .ad-page-heading p { font-size: 11px; line-height: 1.8; }
-  .ad-demo-date { font-size: 10px; }
-  .ad-demo-date span { display: inline; font-size: 8px; margin-left: 8px; }
   .ad-metrics { gap: 7px; margin-bottom: 28px; }
   .ad-metric { padding: 12px 10px; border-radius: 8px; }
   .ad-metric-top { font-size: 9px; min-height: 27px; line-height: 1.6; }
