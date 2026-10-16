@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Building2, Inbox, MessageSquareText, UsersRound, LogOut, ArrowUpRight } from 'lucide-react';
+import { Building2, Inbox, MessageSquareText, UsersRound, LogOut, ArrowUpRight, Coins } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { AuthDialog } from '../auth/AuthDialog';
 import { BrandFooter, BrandHeader } from '../../components/BrandHeader';
@@ -68,6 +68,7 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
   const navigation = [
     ...(audience === 'staff' ? [{ href: '/admin/requests', label: 'Заявки клиентов', icon: Inbox }] : []),
     { href: `${base}/projects`, label: audience === 'worker' ? 'Мои объекты и уборки' : 'Объекты', icon: Building2 },
+    ...(audience === 'worker' ? [{ href: '/work/ic-coins', label: 'IC-coins', icon: Coins }] : []),
     ...(audience === 'client' ? [{ href: '/requests', label: 'Мои заявки', icon: Inbox }] : []),
     { href: `${base}/complaints`, label: 'Обращения по качеству', icon: MessageSquareText },
     ...(auth.user?.role === 'superadmin' ? [{ href: '/admin/accounts', label: 'Аккаунты сотрудников', icon: UsersRound }] : []),
