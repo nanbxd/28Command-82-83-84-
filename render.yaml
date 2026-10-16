@@ -1,0 +1,23 @@
+databases:
+  - name: ic-group-db
+    databaseName: ic_group
+    user: ic_group
+    plan: free
+
+services:
+  - type: web
+    name: ic-group-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ic-group-db
+          property: connectionString
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: DEMO_MODE
+        value: "true"
