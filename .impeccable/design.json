@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T19:16:43.579Z",
+  "title": "Design System: IC Group",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Глубокий бирюзово-синий",
+        "tonalRamp": [
+          "oklch(15.00% 0.07682 222.95)",
+          "oklch(26.43% 0.07682 222.95)",
+          "oklch(37.86% 0.07682 222.95)",
+          "oklch(49.29% 0.07682 222.95)",
+          "oklch(60.71% 0.07682 222.95)",
+          "oklch(72.14% 0.07682 222.95)",
+          "oklch(83.57% 0.07682 222.95)",
+          "oklch(95.00% 0.07682 222.95)"
+        ]
+      },
+      "accent-pale": {
+        "role": "primary",
+        "displayName": "Бледный бирюзовый",
+        "tonalRamp": [
+          "oklch(15.00% 0.01201 209.80)",
+          "oklch(26.43% 0.01201 209.80)",
+          "oklch(37.86% 0.01201 209.80)",
+          "oklch(49.29% 0.01201 209.80)",
+          "oklch(60.71% 0.01201 209.80)",
+          "oklch(72.14% 0.01201 209.80)",
+          "oklch(83.57% 0.01201 209.80)",
+          "oklch(95.00% 0.01201 209.80)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Тёмный акцент",
+        "tonalRamp": [
+          "oklch(15.00% 0.06561 224.57)",
+          "oklch(26.43% 0.06561 224.57)",
+          "oklch(37.86% 0.06561 224.57)",
+          "oklch(49.29% 0.06561 224.57)",
+          "oklch(60.71% 0.06561 224.57)",
+          "oklch(72.14% 0.06561 224.57)",
+          "oklch(83.57% 0.06561 224.57)",
+          "oklch(95.00% 0.06561 224.57)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Ясный синий контур",
+        "tonalRamp": [
+          "oklch(15.00% 0.10440 226.10)",
+          "oklch(26.43% 0.10440 226.10)",
+          "oklch(37.86% 0.10440 226.10)",
+          "oklch(49.29% 0.10440 226.10)",
+          "oklch(60.71% 0.10440 226.10)",
+          "oklch(72.14% 0.10440 226.10)",
+          "oklch(83.57% 0.10440 226.10)",
+          "oklch(95.00% 0.10440 226.10)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Тёмный сланец",
+        "tonalRamp": [
+          "oklch(15.00% 0.03756 234.90)",
+          "oklch(26.43% 0.03756 234.90)",
+          "oklch(37.86% 0.03756 234.90)",
+          "oklch(49.29% 0.03756 234.90)",
+          "oklch(60.71% 0.03756 234.90)",
+          "oklch(72.14% 0.03756 234.90)",
+          "oklch(83.57% 0.03756 234.90)",
+          "oklch(95.00% 0.03756 234.90)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Читаемый серо-синий",
+        "tonalRamp": [
+          "oklch(15.00% 0.02957 235.85)",
+          "oklch(26.43% 0.02957 235.85)",
+          "oklch(37.86% 0.02957 235.85)",
+          "oklch(49.29% 0.02957 235.85)",
+          "oklch(60.71% 0.02957 235.85)",
+          "oklch(72.14% 0.02957 235.85)",
+          "oklch(83.57% 0.02957 235.85)",
+          "oklch(95.00% 0.02957 235.85)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Прохладная бумага",
+        "tonalRamp": [
+          "oklch(15.00% 0.00252 228.78)",
+          "oklch(26.43% 0.00252 228.78)",
+          "oklch(37.86% 0.00252 228.78)",
+          "oklch(49.29% 0.00252 228.78)",
+          "oklch(60.71% 0.00252 228.78)",
+          "oklch(72.14% 0.00252 228.78)",
+          "oklch(83.57% 0.00252 228.78)",
+          "oklch(95.00% 0.00252 228.78)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Белая поверхность",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Тихая граница",
+        "tonalRamp": [
+          "oklch(15.00% 0.00858 225.09)",
+          "oklch(26.43% 0.00858 225.09)",
+          "oklch(37.86% 0.00858 225.09)",
+          "oklch(49.29% 0.00858 225.09)",
+          "oklch(60.71% 0.00858 225.09)",
+          "oklch(72.14% 0.00858 225.09)",
+          "oklch(83.57% 0.00858 225.09)",
+          "oklch(95.00% 0.00858 225.09)"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Подтверждённые отметки",
+        "tonalRamp": [
+          "oklch(15.00% 0.07767 164.57)",
+          "oklch(26.43% 0.07767 164.57)",
+          "oklch(37.86% 0.07767 164.57)",
+          "oklch(49.29% 0.07767 164.57)",
+          "oklch(60.71% 0.07767 164.57)",
+          "oklch(72.14% 0.07767 164.57)",
+          "oklch(83.57% 0.07767 164.57)",
+          "oklch(95.00% 0.07767 164.57)"
+        ]
+      },
+      "success-pale": {
+        "role": "secondary",
+        "displayName": "Подложка полных отметок",
+        "tonalRamp": [
+          "oklch(15.00% 0.01073 158.85)",
+          "oklch(26.43% 0.01073 158.85)",
+          "oklch(37.86% 0.01073 158.85)",
+          "oklch(49.29% 0.01073 158.85)",
+          "oklch(60.71% 0.01073 158.85)",
+          "oklch(72.14% 0.01073 158.85)",
+          "oklch(83.57% 0.01073 158.85)",
+          "oklch(95.00% 0.01073 158.85)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Неполные отметки",
+        "tonalRamp": [
+          "oklch(15.00% 0.09992 68.65)",
+          "oklch(26.43% 0.09992 68.65)",
+          "oklch(37.86% 0.09992 68.65)",
+          "oklch(49.29% 0.09992 68.65)",
+          "oklch(60.71% 0.09992 68.65)",
+          "oklch(72.14% 0.09992 68.65)",
+          "oklch(83.57% 0.09992 68.65)",
+          "oklch(95.00% 0.09992 68.65)"
+        ]
+      },
+      "warning-pale": {
+        "role": "secondary",
+        "displayName": "Подложка неполных отметок",
+        "tonalRamp": [
+          "oklch(15.00% 0.02726 83.54)",
+          "oklch(26.43% 0.02726 83.54)",
+          "oklch(37.86% 0.02726 83.54)",
+          "oklch(49.29% 0.02726 83.54)",
+          "oklch(60.71% 0.02726 83.54)",
+          "oklch(72.14% 0.02726 83.54)",
+          "oklch(83.57% 0.02726 83.54)",
+          "oklch(95.00% 0.02726 83.54)"
+        ]
+      },
+      "information": {
+        "role": "neutral",
+        "displayName": "Информационная подложка",
+        "tonalRamp": [
+          "oklch(15.00% 0.00795 216.62)",
+          "oklch(26.43% 0.00795 216.62)",
+          "oklch(37.86% 0.00795 216.62)",
+          "oklch(49.29% 0.00795 216.62)",
+          "oklch(60.71% 0.00795 216.62)",
+          "oklch(72.14% 0.00795 216.62)",
+          "oklch(83.57% 0.00795 216.62)",
+          "oklch(95.00% 0.00795 216.62)"
+        ]
+      },
+      "skeleton": {
+        "role": "neutral",
+        "displayName": "Заготовка загрузки",
+        "tonalRamp": [
+          "oklch(15.00% 0.00601 223.46)",
+          "oklch(26.43% 0.00601 223.46)",
+          "oklch(37.86% 0.00601 223.46)",
+          "oklch(49.29% 0.00601 223.46)",
+          "oklch(60.71% 0.00601 223.46)",
+          "oklch(72.14% 0.00601 223.46)",
+          "oklch(83.57% 0.00601 223.46)",
+          "oklch(95.00% 0.00601 223.46)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Заголовок страницы",
+        "purpose": "h1; адаптивные варианты описаны в Layout."
+      },
+      "title": {
+        "displayName": "Заголовок панели",
+        "purpose": "Основные h2; локальные варианты сохраняются в CSS."
+      },
+      "body": {
+        "displayName": "Базовый текст",
+        "purpose": "Корень 14px, от 1600px — 15px; локальные абзацы задают line-height."
+      },
+      "label": {
+        "displayName": "Название работы",
+        "purpose": "Компактное название в WorkRow."
+      },
+      "caption": {
+        "displayName": "Вторичная строка",
+        "purpose": "Подпись организации и краткие пояснения."
+      },
+      "metric": {
+        "displayName": "Числовой показатель",
+        "purpose": "Сводка с табличными цифрами; единицы и знаменатель вторичны."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "navigation-state",
+        "value": "background-color 160ms ease, color 160ms ease",
+        "purpose": "Смена состояния .nav-link."
+      },
+      {
+        "name": "day-state",
+        "value": "background 160ms ease, border-color 160ms ease",
+        "purpose": "Смена состояния .day-button."
+      },
+      {
+        "name": "scroll",
+        "value": "smooth",
+        "purpose": "Переход по якорям; html scroll-padding-top: 24px."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "При prefers-reduced-motion: reduce длительности переходов и анимаций равны 0.01ms, scroll-behavior: auto."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1600px",
+        "query": "(min-width: 1600px)",
+        "purpose": "Корень 15px, больше воздуха в строках и верхнем поле."
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1200px",
+        "query": "(max-width: 1200px)",
+        "purpose": "Навигация 204px, поля 26px, компактные колонки."
+      },
+      {
+        "name": "tablet",
+        "value": "1020px",
+        "query": "(max-width: 1020px)",
+        "purpose": "Навигация 185px, двухколоночная сводка и один основной столбец."
+      },
+      {
+        "name": "mobile-navigation",
+        "value": "760px",
+        "query": "(max-width: 760px)",
+        "purpose": "Меню под шапкой 68px; горизонтальные поля 20px."
+      },
+      {
+        "name": "phone",
+        "value": "480px",
+        "query": "(max-width: 480px)",
+        "purpose": "Поля 16px; перенос статуса под название, вспомогательные панели в один столбец."
+      }
+    ],
+    "focus": {
+      "selector": ":focus-visible",
+      "outline": "3px solid #1483a6",
+      "outlineOffset": "4px",
+      "borderRadius": "4px",
+      "cascade": "Более специфичные радиусы компонентов имеют приоритет; main:focus скрывает контур программной цели.",
+      "mobileNavigation": "Открытие фокусирует первый пункт; Escape возвращает фокус кнопке; выбор пункта фокусирует целевой раздел."
+    },
+    "stateBehavior": {
+      "loading": "Статичные skeleton; role=status; блокировка выбора даты.",
+      "error": "role=alert, кнопка повтора; данные выбранной даты не подменяются старым числом.",
+      "empty": "Явный текст об отсутствии работ и предложение выбрать другую дату.",
+      "disclosure": "aria-expanded для списка; нативный details для справки.",
+      "active": "Отдельный стиль :active не определён; сохранены реальные hover, focus-visible, selected и disabled."
+    },
+    "tonalRampMethod": "Синтезированные демонстрационные шкалы OKLCH: 8 ступеней светлоты от 15% до 95%, постоянные chroma и hue исходного цвета. Они не расширяют рабочую палитру приложения.",
+    "sourceRelations": {
+      "styles": "frontend/src/styles.css",
+      "root": {
+        "selector": ":root",
+        "customProperties": {
+          "ink": "--ink",
+          "muted": "--muted",
+          "accent": "--accent",
+          "accent-pale": "--accent-pale",
+          "line": "--line",
+          "surface": "--surface",
+          "rounded.surface": "--radius"
+        },
+        "literalTokens": {
+          "canvas": "background",
+          "focus": ":focus-visible outline",
+          "success": ".work-status.complete color",
+          "success-pale": ".work-status.complete background",
+          "warning": ".work-status.incomplete color",
+          "warning-pale": ".work-status.incomplete background",
+          "accent-hover": ".button.primary:hover background",
+          "information": ".upcoming-panel background",
+          "skeleton": ".skeleton background"
+        }
+      },
+      "font": {
+        "entry": "frontend/src/main.tsx",
+        "import": "@fontsource-variable/manrope",
+        "delivery": "Локальные файлы шрифта в сборке Vite; внешних запросов к шрифтовому CDN нет."
+      },
+      "typography": {
+        "headline": "h1",
+        "title": "h2",
+        "body": ":root (line-height не задан)",
+        "label": ".work-description h3 + h3 line-height",
+        "caption": ".account-name > span",
+        "metric": ".summary-item > strong; tabular-nums"
+      },
+      "rounded": {
+        "focus": ":focus-visible",
+        "badge": ".work-status",
+        "control": ".date-control input / .icon-button",
+        "button": ".button / .expand-button / .nav-link",
+        "day": ".day-button",
+        "skeleton": ".skeleton",
+        "surface": ":root --radius"
+      },
+      "spacing": "Документационные имена повторяющихся литералов styles.css; CSS-переменных spacing пока нет.",
+      "components": {
+        "button-primary": [
+          "frontend/src/features/overview/OverviewPage.tsx: ErrorMessage",
+          "frontend/src/main.tsx: not-found route",
+          ".button.primary"
+        ],
+        "button-expand": [
+          "frontend/src/features/overview/OverviewPage.tsx: OverviewPage",
+          ".expand-button"
+        ],
+        "button-icon": [
+          "frontend/src/components/CabinetLayout.tsx: CabinetLayout",
+          "frontend/src/features/overview/OverviewPage.tsx: WeekPicker",
+          ".icon-button"
+        ],
+        "date-input": [
+          "frontend/src/features/overview/OverviewPage.tsx: OverviewPage",
+          ".date-control input"
+        ],
+        "navigation-active": [
+          "frontend/src/components/CabinetLayout.tsx: CabinetLayout",
+          ".nav-link.active"
+        ],
+        "status-complete": [
+          "frontend/src/features/overview/OverviewPage.tsx: WorkRow",
+          ".work-status.complete"
+        ],
+        "status-incomplete": [
+          "frontend/src/features/overview/OverviewPage.tsx: WorkRow",
+          ".work-status.incomplete"
+        ],
+        "panel": [
+          "frontend/src/features/overview/OverviewPage.tsx: OverviewPage",
+          ".panel"
+        ],
+        "day-selected": [
+          "frontend/src/features/overview/OverviewPage.tsx: WeekPicker",
+          ".day-button.selected"
+        ],
+        "work-row": [
+          "frontend/src/features/overview/OverviewPage.tsx: WorkRow",
+          ".work-row"
+        ]
+      },
+      "scope": "Состав и режим /cabinet — docs/surfaces/client-overview.md; продуктовые ограничения — PRODUCT.md.",
+      "rasterAssets": "В интерфейсе нет поставляемых растровых активов. Снимки .impeccable/review служат только свидетельством проверки."
+    }
+  },
+  "components": [
+    {
+      "name": "Основная кнопка",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Повтор загрузки данных; тот же вариант используется для возврата в кабинет.",
+      "html": "<button class=\"ds-primary\" type=\"button\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/></svg>Попробовать ещё раз</button>",
+      "css": ".ds-primary { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border: 1px solid var(--accent, #155f75); border-radius: 7px; background: var(--accent, #155f75); color: var(--surface, #fff); font-size: 14px; font-weight: 600; cursor: pointer; } .ds-primary:hover { background: #104b5e; } .ds-primary:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; }"
+    },
+    {
+      "name": "Раскрытие списка",
+      "kind": "button",
+      "refersTo": "button-expand",
+      "description": "Вторичная кнопка раскрывает все группы работ; состояние передаётся aria-expanded.",
+      "html": "<button class=\"ds-expand\" type=\"button\" aria-expanded=\"false\">Показать все работы (9)<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button>",
+      "css": ".ds-expand { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; gap: 7px; width: calc(100% - 48px); margin: 0 24px 19px; padding: 12px; border: 1px solid var(--line, #dfe6e9); border-radius: 7px; background: var(--surface, #fff); color: var(--accent, #155f75); font-size: 13px; font-weight: 600; cursor: pointer; } .ds-expand:hover { background: #f5f9fa; } .ds-expand[aria-expanded=\"true\"] svg { transform: rotate(180deg); } .ds-expand:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; } @media (max-width: 480px) { .ds-expand { width: calc(100% - 32px); margin-inline: 16px; min-height: 44px; } }"
+    },
+    {
+      "name": "Кнопка с иконкой",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Компактное управление; стрелки недели используют этот вариант с меньшей шириной.",
+      "html": "<button class=\"ds-icon-button\" type=\"button\" aria-label=\"Следующая неделя\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button>",
+      "css": ".ds-icon-button { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-grid; place-items: center; width: 32px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #526e7b; cursor: pointer; } .ds-icon-button:hover:not(:disabled) { background: var(--accent-pale, #e6f1f3); } .ds-icon-button:disabled { color: #b2bfc5; cursor: not-allowed; } .ds-icon-button:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; }"
+    },
+    {
+      "name": "Дата работ",
+      "kind": "input",
+      "refersTo": "date-input",
+      "description": "Нативное поле даты с границами архивного периода и программной подписью.",
+      "html": "<input class=\"ds-date\" aria-label=\"Дата работ\" type=\"date\" value=\"2026-09-30\" min=\"2026-09-01\" max=\"2026-09-30\" />",
+      "css": ".ds-date { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 34px; width: 137px; padding: 6px 9px; border: 1px solid var(--line, #dfe6e9); border-radius: 6px; color: #435d69; background: var(--surface, #fff); font-size: 13px; accent-color: var(--accent, #155f75); caret-color: var(--accent, #155f75); } .ds-date:disabled { opacity: .6; } .ds-date:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; } @media (max-width: 480px) { .ds-date { width: 128px; min-height: 36px; padding: 7px; font-size: 12px; } }"
+    },
+    {
+      "name": "Навигация по разделам",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Обычный и выбранный пункты; в приложении мобильное меню управляет фокусом через CabinetLayout.",
+      "html": "<nav class=\"ds-navigation\" aria-label=\"Разделы обзора\"><a class=\"ds-nav-link\" href=\"#overview\" aria-current=\"location\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg><span>Обзор</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></a><a class=\"ds-nav-link\" href=\"#objects\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z\"/><path d=\"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4\"/></svg><span>Мои объекты</span></a></nav>",
+      "css": ".ds-navigation { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-nav-link { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 11px 13px; margin-bottom: 7px; color: #5e737e; border-radius: 7px; font-size: 14px; font-weight: 650; text-decoration: none; transition: background-color 160ms, color 160ms; } .ds-nav-link span { flex: 1; } .ds-nav-link:hover { color: var(--accent, #155f75); background: #f2f6f7; } .ds-nav-link[aria-current] { color: var(--accent, #155f75); background: var(--accent-pale, #e6f1f3); } .ds-nav-link:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; } @media (max-width: 1020px) { .ds-nav-link { font-size: 13px; gap: 9px; } } @media (max-width: 760px) { .ds-navigation { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .ds-nav-link { margin: 0; min-height: 44px; } } @media (prefers-reduced-motion: reduce) { .ds-nav-link { transition-duration: .01ms; } }"
+    },
+    {
+      "name": "Полные отметки",
+      "kind": "chip",
+      "refersTo": "status-complete",
+      "description": "Информационная метка наличия отметок, не подтверждение приёмки работ.",
+      "html": "<span class=\"ds-status-complete\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m20 6-11 11-5-5\"/></svg><span>Отметки 1/1</span></span>",
+      "css": ".ds-status-complete { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 11px; font-weight: 600; padding: 5px 7px; border-radius: 5px; color: #28684f; background: #edf5f0; } @media (max-width: 1200px) { .ds-status-complete { font-size: 10px; padding-inline: 5px; } .ds-status-complete svg { display: none; } } @media (max-width: 1020px) { .ds-status-complete { font-size: 12px; padding: 5px 8px; } .ds-status-complete svg { display: block; } } @media (max-width: 480px) { .ds-status-complete { font-size: 11px; padding: 4px 6px; margin-top: 2px; } .ds-status-complete svg { width: 12px; height: 12px; } }"
+    },
+    {
+      "name": "Неполные отметки",
+      "kind": "chip",
+      "refersTo": "status-incomplete",
+      "description": "Янтарное состояние показывает неполноту данных и требует сверки.",
+      "html": "<span class=\"ds-status-incomplete\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/></svg><span>Отметки 2/3</span></span>",
+      "css": ".ds-status-incomplete { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 11px; font-weight: 600; padding: 5px 7px; border-radius: 5px; color: #8d5c1c; background: #fbf1de; } @media (max-width: 1200px) { .ds-status-incomplete { font-size: 10px; padding-inline: 5px; } .ds-status-incomplete svg { display: none; } } @media (max-width: 1020px) { .ds-status-incomplete { font-size: 12px; padding: 5px 8px; } .ds-status-incomplete svg { display: block; } } @media (max-width: 480px) { .ds-status-incomplete { font-size: 11px; padding: 4px 6px; margin-top: 2px; } .ds-status-incomplete svg { width: 12px; height: 12px; } }"
+    },
+    {
+      "name": "Панель объекта",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Общий белый контейнер с тонкой границей, заголовком и фактом об объекте.",
+      "html": "<section class=\"ds-panel\" aria-label=\"Мой объект\"><div class=\"ds-panel-heading\"><h2>Мой объект</h2><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z\"/><path d=\"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4\"/></svg></div><div class=\"ds-panel-content\"><h3>ТРЦ «Норд»</h3><p>Места общего пользования и территория</p></div></section>",
+      "css": ".ds-panel { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--surface, #fff); color: var(--ink, #172e3b); border: 1px solid var(--line, #dfe6e9); border-radius: var(--radius, 14px); overflow: hidden; } .ds-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 24px 24px 20px; border-bottom: 1px solid var(--line, #dfe6e9); } .ds-panel-heading h2 { margin: 0; font-size: 1.14rem; line-height: 1.4; font-weight: 750; letter-spacing: -.018em; } .ds-panel-heading svg { color: #71909b; } .ds-panel-content { padding: 22px 24px 0; } .ds-panel-content h3 { margin: 0; font-size: 20px; line-height: 1.5; font-weight: 750; letter-spacing: -.025em; } .ds-panel-content p { margin: 7px 0 0; max-width: 28ch; color: var(--muted, #5b6e7a); font-size: 13px; line-height: 1.65; } @media (max-width: 1200px) { .ds-panel-heading, .ds-panel-content { padding-inline: 20px; } } @media (max-width: 480px) { .ds-panel-heading { padding-top: 20px; } .ds-panel-heading h2 { font-size: 15px; } .ds-panel-content p { max-width: none; } }"
+    },
+    {
+      "name": "Дни недели",
+      "kind": "custom",
+      "refersTo": "day-selected",
+      "description": "Фрагмент WeekPicker с обычным, выбранным и недоступным днём.",
+      "html": "<div class=\"ds-days\" aria-label=\"Выбор дня работ\"><button class=\"ds-day\" type=\"button\" aria-pressed=\"false\" aria-label=\"Вторник, 29 сентября\"><span>Вт</span><strong>29</strong><span class=\"ds-day-dot ds-has-work\" aria-hidden=\"true\"></span></button><button class=\"ds-day ds-selected\" type=\"button\" aria-pressed=\"true\" aria-label=\"Среда, 30 сентября\"><span>Ср</span><strong>30</strong><span class=\"ds-day-dot ds-has-work\" aria-hidden=\"true\"></span></button><button class=\"ds-day\" type=\"button\" disabled aria-pressed=\"false\" aria-label=\"Четверг, 1 октября\"><span>Чт</span><strong>1</strong><span class=\"ds-day-dot\" aria-hidden=\"true\"></span></button></div>",
+      "css": ".ds-days { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; } .ds-day { font-family: 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 8px 2px 7px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink, #172e3b); cursor: pointer; transition: background 160ms, border-color 160ms; } .ds-day > span:first-child { color: var(--muted, #5b6e7a); font-size: 12px; text-transform: capitalize; } .ds-day strong { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; } .ds-day:hover:not(:disabled) { background: #f1f6f7; } .ds-day.ds-selected, .ds-day.ds-selected:hover:not(:disabled) { color: white; background: var(--accent, #155f75); } .ds-day.ds-selected > span:first-child { color: #d1e8ef; } .ds-day-dot { width: 3px; height: 3px; margin-top: 1px; border-radius: 50%; } .ds-has-work { background: #8aa7ae; } .ds-selected .ds-has-work { background: #d7ebed; } .ds-day:disabled:not(.ds-selected), .ds-day:disabled:not(.ds-selected) > span:first-child { color: #a4afb5; cursor: not-allowed; } .ds-day:focus-visible { outline: 3px solid #1483a6; outline-offset: 4px; } @media (max-width: 480px) { .ds-days { gap: 1px; } .ds-day { padding-block: 8px; } .ds-day strong { font-size: 15px; } } @media (prefers-reduced-motion: reduce) { .ds-day { transition-duration: .01ms; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Сервисный журнал IC Group",
+    "overview": "Система выглядит как аккуратный рабочий журнал: прохладная светлая основа, тёмный текст, тонкие разделители и сдержанный бирюзово-синий акцент. Плотность помогает сравнивать факты; свободное место отделяет группы, а не превращает каждую строку в отдельную карточку.\n\nГлавные выразительные средства — иерархия Manrope, выровненные числа, ясный выбранный элемент и текстовые статусы. Иконки остаются простыми контурами; изображения и декоративные иллюстрации в текущей реализации отсутствуют. Движение ограничено сменой состояний и прокруткой.",
+    "keyCharacteristics": [
+      "Прохладные белые поверхности и тонкие границы.",
+      "Один акцент для действий, ссылок и выбранных элементов.",
+      "Компактные факты с табличными цифрами.",
+      "Статус всегда читается словами и числами.",
+      "Одинаковая логика управления на компьютере и телефоне."
+    ],
+    "rules": [
+      {
+        "name": "The State Has Words Rule",
+        "body": "Цвет дополняет текст и числа; зелёная отметка не заменяет подпись о том, что именно подтверждено.",
+        "section": "colors"
+      },
+      {
+        "name": "The Number Alignment Rule",
+        "body": "Сравниваемые числа используют табличные цифры; единицы и пояснения остаются визуально вторичными.",
+        "section": "typography"
+      },
+      {
+        "name": "The Reflow Rule",
+        "body": "На узком экране сведения переносятся в читаемые строки; связанные время, название и статус сохраняют порядок чтения.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Панели разделяются тоном, границей и расстоянием; тень не является частью текущего языка компонентов.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Visible Control Rule",
+        "body": "Кнопки, ссылки и поле даты сохраняют видимый клавиатурный фокус; состояние элемента выражается подходящими HTML-атрибутами.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** использовать существующие переменные цвета и радиуса из styles.css при добавлении компонентов.",
+      "**Do** подключать локальный Manrope Variable и сохранять табличные цифры для сравниваемых значений.",
+      "**Do** сопровождать состояние подписью и сохранять понятные загрузку, ошибку и пустое содержание.",
+      "**Do** переносить содержимое на узких экранах, сохраняя связь времени, названия и статуса.",
+      "**Do** сохранять видимый фокус, нативные кнопки и подписи полей."
+    ],
+    "donts": [
+      "**Don't** обозначать полноту данных только цветом.",
+      "**Don't** переносить прежние значения палитры или системный шрифт из предварительного черновика.",
+      "**Don't** добавлять тени и декоративные изображения как обязательную часть существующих компонентов.",
+      "**Don't** превращать композицию первого обзора в обязательный шаблон для всех следующих экранов."
+    ]
+  }
+}

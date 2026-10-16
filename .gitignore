@@ -1,0 +1,61 @@
+# ==========================================
+# Зависимости и сборка проекта
+# ==========================================
+node_modules/
+package-lock.json
+dist/
+build/
+*.log
+tmp/
+
+# ==========================================
+# Настройки окружения и IDE
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env
+.env.local
+
+# ==========================================
+# ИИ-агенты и Дизайн-скиллы (Codex / Claude Code)
+# ==========================================
+# Полностью скрываем папки агентов от Git (если вы кодите один)
+.codex/
+
+# ==========================================
+# Локальные файлы и кэш плагина Impeccable
+# ==========================================
+# Скрываем локальные логи сессий, скриншоты, кэш и транзакции Impeccable
+.impeccable/live/
+.impeccable/history/
+.impeccable/provider-smoke/
+.impeccable/critique/*
+!.impeccable/critique/ignore.md
+.impeccable/config.local.json
+.impeccable-live.json
+.impeccable-live/
+
+# Скрываем временный кэш хуков в любых папках
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+
+# Игнорируем тяжелые бинарные движки Impeccable, которые он скачивает под капот
+**/skills/impeccable/scripts/bin/
+**/skills/impeccable/scripts/config.json
+src/__impeccable_provider_smoke_*.html
+src/lib/impeccable/
+
+# Local development and verification tools
+.tools/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+.impeccable/cache/
+.impeccable/review/
+!frontend/package-lock.json
