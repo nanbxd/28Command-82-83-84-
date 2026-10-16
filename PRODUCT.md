@@ -25,9 +25,11 @@ Connect a cleaning estimate and request to a client contract, service delivery, 
 - Quality requests first reach IC Group; executors see them only after a manager forwards them.
 - Demo data may come from the participant package and must be identified as demo data.
 - The public entry is a multi-object cleaning request. Visitors may complete it anonymously; submission requires registration or sign-in. Registration uses email/password with name, phone and company. Drafts survive registration.
-- Submitted requests retain the client's identity and an immutable snapshot of object/service inputs. Managers access these through a role-protected API; a staff UI is a later step.
+- Submitted requests retain the client's identity and an immutable snapshot of object/service inputs. Managers access and update these through the role-protected API and `/admin/requests`; clients see the same persisted status.
 - The current form requests a manager's estimate. It must not invent prices before the versioned calculation engine is implemented.
 - The existing package-based cabinet remains an explicitly labelled demo, separate from a newly registered client's data.
+- The administrative prototype is preserved at `/demo/admin` with incoming applications, active projects and quality complaints. Its fictional records and browser-local changes are separate from live requests.
+- The administrative checklist structure is imported from workbook 02; report completion and subcontractor agreement values remain explicitly demonstrative.
 
 ## Brand Commitment
 

@@ -18,4 +18,4 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Boundaries
 
-All TZ §3 input categories are represented, including multiple objects, individual base/support schedules, bathrooms, supplies, general cleaning, notes and optional budget. Account profile is associated server-side. Authorization, idempotency and validation are tested. Numeric pricing, manager UI, email verification and password recovery remain explicit future features. No contact messages are sent externally in this task.
+All TZ §3 input categories are represented, including multiple objects, individual base/support schedules, bathrooms, supplies, general cleaning, notes and optional budget. Account profile is associated server-side. Authorization, idempotency and validation are tested. Submitted records now reach the role-protected staff screen at `/admin/requests`; staff status changes appear in the client's own requests. The administrative demo is preserved separately at `/demo/admin`. Numeric pricing, live projects/complaints, email verification and password recovery remain explicit future features. No contact messages are sent externally in this task.

@@ -12,6 +12,9 @@ export class ApiError extends Error {
 }
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (options.signal?.aborted) abort();
+  options.signal?.addEventListener('abort', abort, { once: true });
   const timeout = setTimeout(() => controller.abort(), 20000);
   try {
     const token = getToken();
@@ -27,5 +30,5 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('Не удалось связаться с сервером. Данные сохранены — попробуйте ещё раз.', 0);
-  } finally { clearTimeout(timeout); }
+  } finally { clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
 }
