@@ -10,7 +10,7 @@ from app.bootstrap import bootstrap
 from app.config import Settings
 from app.models import User
 from app.operations import VisitInput, validate_schedule
-from app.operations_models import Project
+from app.operations_models import Project, Visit
 from test_requests import account, client, db, headers, submission
 
 
@@ -32,12 +32,16 @@ def flow(client, db, submission):
     response = client.post(f'/api/v1/staff/requests/{source["id"]}/projects', headers=admin)
     assert response.status_code == 200, response.text
     project = response.json()[0]
-    scheduled = client.post(f'/api/v1/staff/projects/{project["id"]}/visits', headers=admin, json={
-        'worker_id': person.id, 'planned_start': '2026-11-01T08:00:00+05:00',
-        'planned_end': '2026-11-01T10:00:00+05:00', 'checklist': ['Убрать пол', 'Убрать санузлы']})
-    assert scheduled.status_code == 201, scheduled.text
+    # Historical standalone assignment: new assignments are created only by contractors.
+    visit = Visit(id='legacy-visit', project_id=project['id'], worker_id=person.id,
+        planned_start=datetime(2026, 11, 1, 3, tzinfo=timezone.utc),
+        planned_end=datetime(2026, 11, 1, 5, tzinfo=timezone.utc),
+        checklist=[{'text':'Убрать пол', 'done':False}, {'text':'Убрать санузлы', 'done':False}],
+        notes='', status='planned', history=[])
+    db.add(visit)
+    db.commit()
     return dict(owner=owner, other=other, admin=admin, worker=worker, worker_id=person.id,
-                source=source['id'], project=project['id'], visit=scheduled.json()['id'])
+                source=source['id'], project=project['id'], visit=visit.id)
 
 
 def photo_bytes():
@@ -113,9 +117,9 @@ def test_real_report_and_private_files_complete_chain(client, db, flow):
     assert submitted.json()['actual_start'] and submitted.json()['actual_end']
     assert upload(client, f, 'after').status_code == 409
     assert client.post(actions, headers=f['worker'], json={'action': 'accept'}).status_code == 403
-    assert client.post(actions, headers=f['admin'], json={'action': 'accept'}).status_code == 200
+    assert client.post(actions, headers=f['admin'], json={'action': 'accept'}).status_code == 403
     own = client.get(f'/api/v1/projects/{f["project"]}', headers=f['owner']).json()
-    assert own['last_cleaning'] and own['visits'][0]['status'] == 'accepted'
+    assert own['last_cleaning'] and own['visits'][0]['status'] == 'submitted'
     assert len(own['files']) == 2
     assert client.get('/api/v1/demo/overview').status_code == 404
 
@@ -158,7 +162,7 @@ def test_file_validation_schedule_conflicts_and_role_boundaries(client, flow):
     assert client.post(endpoint, params={'kind': 'contract', 'name': 'fake.pdf'}, content=b'%PDF-1.7', headers=f['owner']).status_code == 403
     assert client.post(endpoint, params={'kind': 'avr', 'name': 'act.pdf'}, content=b'%PDF-1.7', headers=f['admin']).status_code == 422
     schedule = dict(worker_id=f['worker_id'], planned_start='2026-11-01T09:00:00+05:00', planned_end='2026-11-01T11:00:00+05:00', checklist=['Уборка'])
-    assert client.post(f'/api/v1/staff/projects/{f["project"]}/visits', headers=f['admin'], json=schedule).status_code == 409
+    assert client.post(f'/api/v1/staff/projects/{f["project"]}/visits', headers=f['admin'], json=schedule).status_code == 403
     schedule['planned_start'] = '2026-11-01T09:00:00'
     assert client.post(f'/api/v1/staff/projects/{f["project"]}/visits', headers=f['admin'], json=schedule).status_code == 422
 

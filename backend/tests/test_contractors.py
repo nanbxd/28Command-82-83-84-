@@ -114,3 +114,36 @@ def test_cancelled_plan_and_explicit_complaint_forwarding(client, db, submission
     assert client.put(f'/api/v1/staff/projects/{project}/contractor', headers=admin, json={'contractor_id':oid}).status_code == 200
     assert client.get('/api/v1/complaints', headers=contractor).json() == []
     assert client.get(url, headers=other).status_code == 404
+
+
+def test_contractor_assignment_cors_preflight(client):
+    from app.config import get_settings
+    origin = get_settings().frontend_origin.split(',')[0].strip()
+    response = client.options('/api/v1/staff/projects/object-id/contractor', headers={
+        'Origin': origin,
+        'Access-Control-Request-Method': 'PUT',
+        'Access-Control-Request-Headers': 'authorization,content-type',
+    })
+    assert response.status_code == 200, response.text
+    assert response.headers['access-control-allow-origin'] == origin
+    assert 'PUT' in response.headers['access-control-allow-methods']
+    denied = client.options('/api/v1/staff/projects/object-id/contractor', headers={
+        'Origin': 'https://untrusted.example', 'Access-Control-Request-Method': 'PUT',
+    })
+    assert denied.status_code == 400
+    assert 'access-control-allow-origin' not in denied.headers
+
+
+def test_admin_cannot_schedule_or_mutate_work(client, db, submission):
+    owner, admin, contractor, cid, worker, wid, other, oid, project = setup(client, db, submission)
+    item = dict(worker_id=wid, zone='Первый этаж', planned_start='2026-11-01T09:00:00+05:00', planned_end='2026-11-01T11:00:00+05:00', checklist=['Вымыть пол'])
+    assert client.post(f'/api/v1/projects/{project}/runs', headers=admin, json={'name':'Уборка', 'assignments':[item]}).status_code == 403
+    legacy = {k:v for k,v in item.items() if k != 'zone'}
+    assert client.post(f'/api/v1/staff/projects/{project}/visits', headers=admin, json=legacy).status_code == 403
+    run = client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Уборка', 'assignments':[item]})
+    assert run.status_code == 201
+    visit = db.scalar(select(Visit).where(Visit.run_id == run.json()['id']))
+    for action in ('start', 'save', 'submit', 'accept', 'return', 'cancel'):
+        assert client.post(f'/api/v1/visits/{visit.id}/actions', headers=admin, json={'action':action}).status_code == 403
+    assert client.post(f'/api/v1/projects/{project}/files', headers=admin, params={'visit_id':visit.id,'kind':'before','name':'photo.png'}, content=photo_bytes()).status_code == 403
+    assert client.get(f'/api/v1/projects/{project}', headers=admin).status_code == 200
