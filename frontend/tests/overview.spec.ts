@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('the archive loads, a day can be selected, and the work list expands', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/cabinet');
+  await page.goto('/demo/cabinet');
   await expect(page.getByRole('heading', { name: 'Обзор кабинета' })).toBeVisible();
   await expect(page.getByLabel('Сводка за месяц')).toContainText('729');
   await expect(page.getByLabel('Сводка за месяц')).toContainText('705');
@@ -18,7 +18,7 @@ test('the archive loads, a day can be selected, and the work list expands', asyn
 
 test('mobile navigation, disclosure and viewport fit', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/cabinet');
+  await page.goto('/demo/cabinet');
   await expect(page.getByRole('heading', { name: 'Обзор кабинета' })).toBeVisible();
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page.getByRole('link', { name: 'Мои объекты', exact: true }).click();
@@ -31,7 +31,7 @@ test('mobile navigation, disclosure and viewport fit', async ({ page }) => {
 
 test('a failed request has an actionable retry', async ({ page }) => {
   await page.route('**/api/v1/demo/overview*', route => route.abort());
-  await page.goto('/cabinet');
+  await page.goto('/demo/cabinet');
   await expect(page.getByRole('heading', { name: 'Данные недоступны' })).toBeVisible();
   await page.unroute('**/api/v1/demo/overview*');
   await page.getByRole('button', { name: 'Попробовать ещё раз' }).click();
@@ -40,7 +40,7 @@ test('a failed request has an actionable retry', async ({ page }) => {
 
 test('mobile menu supports keyboard opening, traversal and Escape', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/cabinet');
+  await page.goto('/demo/cabinet');
   await expect(page.getByRole('heading', { name: 'Обзор кабинета' })).toBeVisible();
   const opener = page.getByRole('button', { name: 'Открыть меню' });
   await opener.focus();
@@ -54,7 +54,7 @@ test('mobile menu supports keyboard opening, traversal and Escape', async ({ pag
 });
 
 test('a failed date change keeps the correct selected-day count and can retry', async ({ page }) => {
-  await page.goto('/cabinet');
+  await page.goto('/demo/cabinet');
   await expect(page.getByRole('heading', { name: 'Обзор кабинета' })).toBeVisible();
   await expect(page.locator('.daily-heading')).toContainText('24 смен в плане');
   await page.route('**/api/v1/demo/overview?*', route => route.abort());

@@ -1,5 +1,7 @@
 export type AdminTab = 'requests' | 'projects' | 'complaints';
-export type RequestStatus = 'new' | 'review' | 'contacted';
+import type { RequestRecord } from '../request/types';
+
+export type RequestStatus = 'new' | 'review' | 'contacted' | 'closed';
 export type ComplaintStatus = 'open' | 'review' | 'correction' | 'closed';
 
 export interface RequestObject {
@@ -29,7 +31,8 @@ export interface ClientRequest {
   generalCleaning: string;
   budget: number | null;
   wishes: string;
-  estimate: { net: number; vat: number; total: number; version: string; period: string };
+  estimate: { net: number; vat: number; total: number; version: string; period: string } | null;
+  source?: RequestRecord;
 }
 
 export interface ChecklistRow {

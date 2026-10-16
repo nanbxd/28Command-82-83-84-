@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { ArrowUpRight, Check, Inbox, X } from 'lucide-react';
 import type { ClientRequest, ComplaintStatus, RequestStatus } from './types';
 
-export const requestLabels: Record<RequestStatus, string> = { new: 'Новая', review: 'В работе', contacted: 'Связь установлена' };
+export const requestLabels: Record<RequestStatus, string> = { new: 'Новая', review: 'В работе', contacted: 'Связь установлена', closed: 'Закрыта' };
 export const complaintLabels: Record<ComplaintStatus, string> = { open: 'Новое', review: 'На рассмотрении', correction: 'Исправление предъявлено', closed: 'Закрыто' };
 export const number = new Intl.NumberFormat('ru-RU');
 export const money = (value: number) => `${number.format(value)} ₸`;

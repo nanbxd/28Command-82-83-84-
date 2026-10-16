@@ -13,7 +13,7 @@ async function capture(file) {
   await page.screenshot({ path: path.join(output, file), fullPage: true });
 }
 page.on('pageerror', error => errors.push(error.message));
-await page.goto((process.env.TEST_BASE_URL || 'http://127.0.0.1:5173') + '/cabinet');
+await page.goto((process.env.TEST_BASE_URL || 'http://127.0.0.1:5173') + '/demo/cabinet');
 await page.getByRole('heading', { name: 'Обзор кабинета' }).waitFor();
 await page.evaluate(() => document.fonts.ready);
 await capture('desktop.png');

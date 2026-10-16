@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test('requests expose the complete multi-object questionnaire and retain status changes', async ({ page }) => {
-  await page.goto('/admin');
-  await expect(page).toHaveURL(/\/admin\/requests$/);
+  await page.goto('/demo/admin');
+  await expect(page).toHaveURL(/\/demo\/admin\/requests$/);
   await page.getByLabel('Город', { exact: true }).selectOption('Астана');
   await page.getByLabel('Статус', { exact: true }).selectOption('new');
   await expect(page.locator('tbody tr')).toHaveCount(1);
@@ -23,7 +23,7 @@ test('requests expose the complete multi-object questionnaire and retain status 
 });
 
 test('search has a reset and CSV export respects the filtered list', async ({ page }) => {
-  await page.goto('/admin/requests');
+  await page.goto('/demo/admin/requests');
   await page.getByRole('textbox', { name: 'Поиск по текущему разделу' }).fill('несуществующий');
   await expect(page.getByRole('heading', { name: 'Ничего не найдено' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Экспорт CSV' })).toBeDisabled();
@@ -42,7 +42,7 @@ test('search has a reset and CSV export respects the filtered list', async ({ pa
 });
 
 test('projects use the workbook checklist, keep general cleaning separate, and show agreement/documents', async ({ page }) => {
-  await page.goto('/admin/projects');
+  await page.goto('/demo/admin/projects');
   await page.getByRole('button', { name: 'Магазин «Вента» · ТРЦ «Норд»', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('190 чел.-мин', { exact: true })).toBeVisible();
@@ -64,7 +64,7 @@ test('projects use the workbook checklist, keep general cleaning separate, and s
 test('complaints reach IC Group first; forwarding is explicit and the original survives replies', async ({ page }) => {
   const apiRequests: string[] = [];
   page.on('request', request => { if (request.url().includes('/api/')) apiRequests.push(request.url()); });
-  await page.goto('/admin/complaints');
+  await page.goto('/demo/admin/complaints');
   await page.getByRole('button', { name: 'Открыть возражение В-0004' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('Обращение поступило только в IC Group', { exact: true })).toBeVisible();
@@ -89,7 +89,7 @@ test('complaints reach IC Group first; forwarding is explicit and the original s
 });
 
 test('drawer keeps keyboard focus inside and returns focus after Escape', async ({ page }) => {
-  await page.goto('/admin/requests');
+  await page.goto('/demo/admin/requests');
   const opener = page.getByRole('button', { name: 'Открыть заявку З-0008' });
   await opener.click();
   const dialog = page.getByRole('dialog');
@@ -106,7 +106,7 @@ test('invalid local storage recovers; unavailable writes are reported honestly',
     localStorage.setItem('ic-group.admin-demo.v1', '{broken');
     Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError'); };
   });
-  await page.goto('/admin/requests');
+  await page.goto('/demo/admin/requests');
   await expect(page.locator('tbody tr')).toHaveCount(5);
   await page.getByRole('button', { name: 'Открыть заявку З-0008' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Взять в работу' }).click();
@@ -116,7 +116,7 @@ test('invalid local storage recovers; unavailable writes are reported honestly',
 for (const width of [390, 320]) {
   test(`all tabs and an open drawer fit a ${width}px viewport`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto('/admin/requests');
+    await page.goto('/demo/admin/requests');
     const nav = page.getByRole('navigation', { name: 'Разделы кабинета IC Group' });
     for (const label of ['Входящие заявки', 'Активные проекты', 'Возражения']) {
       await nav.getByRole('link', { name: new RegExp(label) }).click();
@@ -133,9 +133,9 @@ for (const width of [390, 320]) {
 
 test('existing client route remains available after the admin styles have loaded', async ({ page }) => {
   await page.route('**/api/v1/demo/overview*', route => route.abort());
-  await page.goto('/admin/requests');
+  await page.goto('/demo/admin/requests');
   await expect(page.getByRole('heading', { name: 'Рабочий кабинет.' })).toBeVisible();
-  await page.evaluate(() => { history.pushState({}, '', '/cabinet'); dispatchEvent(new PopStateEvent('popstate')); });
+  await page.evaluate(() => { history.pushState({}, '', '/demo/cabinet'); dispatchEvent(new PopStateEvent('popstate')); });
   await expect(page.getByRole('heading', { name: 'Данные недоступны' })).toBeVisible();
   await expect(page.locator('.ic-admin')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Попробовать ещё раз' })).toBeVisible();

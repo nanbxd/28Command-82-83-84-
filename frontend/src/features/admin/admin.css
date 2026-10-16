@@ -102,6 +102,9 @@
 .ad-requests-table td > strong { font-weight: 500; color: #434e3b; }
 .ad-requests-table td > span:not(.ad-badge) { display: block; font-size: 10px; color: #929a88; margin-top: 4px; }
 .ad-client-cell { display: flex; align-items: center; gap: 11px; }
+.ad-client-cell > div, .ad-drawer-header > div { min-width: 0; overflow-wrap: anywhere; }
+.ad-requests-table td, .ad-facts dd { overflow-wrap: anywhere; }
+.ad-refresh { margin: 0 0 12px; }
 .ad-avatar { display: inline-grid; place-items: center; width: 37px; height: 37px; flex-shrink: 0; border-radius: 8px; font-size: 11px; font-weight: 650; letter-spacing: -.02em; }
 .ad-avatar-green { background: #edf3e3; color: #5c763c; }
 .ad-avatar-blue { background: #eaf0f6; color: #5b7690; }
@@ -312,9 +315,9 @@
   .ad-nav-link > span { order: 2; flex: 1 0 100%; font-size: 10px; }
   .ad-nav-link b { margin-left: auto; font-size: 10px; height: 19px; min-width: 19px; }
   .ad-nav-link > svg { width: 17px; height: 17px; }
-  .ad-topbar { height: 60px; padding: 0 17px; }
+  .ad-topbar { height: auto; min-height: 60px; padding: 10px 17px; }
   .ad-breadcrumb { display: none; }
-  .ad-topbar-right { width: 100%; gap: 15px; }
+  .ad-topbar-right { width: 100%; gap: 10px; flex-wrap: wrap; }
   .ad-demo-tag { margin-right: auto; font-size: 9px; }
   .ad-account { padding-left: 15px; }
   .ad-account > div { display: none; }
