@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -12,10 +11,10 @@ from sqlalchemy.orm import Session
 
 from .config import Settings, get_settings
 from .db import get_db
-from .overview import build_overview
-from .schemas import Overview
 from .auth import router as auth_router
 from .requests import router as requests_router
+from .operations import router as operations_router
+from .accounts import router as accounts_router
 
 app = FastAPI(title="IC Group Client API", version="0.1.0")
 app.add_middleware(CORSMiddleware,
@@ -25,6 +24,16 @@ app.add_middleware(CORSMiddleware,
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(auth_router)
 app.include_router(requests_router)
+app.include_router(operations_router)
+app.include_router(accounts_router)
+
+
+@app.middleware("http")
+async def private_responses(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.exception_handler(RequestValidationError)
@@ -41,11 +50,6 @@ async def database_error(_request, _exception):
     return JSONResponse(status_code=503, content={"detail": "Данные временно недоступны. Попробуйте обновить страницу."})
 
 
-def require_demo(settings: Annotated[Settings, Depends(get_settings)]) -> None:
-    if not settings.demo_mode:
-        raise HTTPException(404, "Not found")
-
-
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -55,8 +59,3 @@ def health() -> dict[str, str]:
 def ready(db: Annotated[Session, Depends(get_db)]) -> dict[str, str]:
     db.execute(text("SELECT 1"))
     return {"status": "ready"}
-
-
-@app.get("/api/v1/demo/overview", response_model=Overview, dependencies=[Depends(require_demo)])
-def overview(db: Annotated[Session, Depends(get_db)], day: date | None = None) -> Overview:
-    return build_overview(db, day)

@@ -36,6 +36,6 @@ export function RequestDetail({ request, onStatus, busy = false }: { request: Cl
       {request.source && request.status === 'closed' && <button className="ad-button" disabled={busy} onClick={() => onStatus('review')}>Вернуть в работу</button>}
       {busy && <span role="status">Сохраняем статус…</span>}
     </div>
-    <p className="ad-footnote">Следующий шаг — согласовать объекты, план, сроки и цену, затем оформить договор. Договор ещё не создан.</p>
+    <p className="ad-footnote">Условия обслуживания и оформленные документы находятся в связанных карточках объектов.</p>
   </>;
 }

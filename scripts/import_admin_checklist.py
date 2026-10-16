@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from import_demo import read_sheet
+from read_workbook import read_sheet
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = "02_Чек-листы_стандарт_и_пример.xlsx"

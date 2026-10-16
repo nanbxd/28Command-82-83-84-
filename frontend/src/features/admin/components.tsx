@@ -47,7 +47,7 @@ export function Drawer({ title, eyebrow, children, close }: { title: string; eye
     };
   }, []);
   return <dialog ref={ref} className="ad-drawer" aria-labelledby="ad-detail-title" onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right) close(); } }}>
-    <header className="ad-drawer-header"><div><span className="ad-eyebrow">{eyebrow}</span><h2 id="ad-detail-title">{title}</h2></div><button autoFocus className="ad-icon-button" aria-label="Закрыть карточку" onClick={close}><X size={21} /></button></header>
+    <header className="ad-drawer-header"><div><h2 id="ad-detail-title">{title}</h2><p className="ad-drawer-context">{eyebrow}</p></div><button autoFocus className="ad-icon-button" aria-label="Закрыть карточку" onClick={close}><X size={21} /></button></header>
     <div className="ad-drawer-body">{children}</div>
   </dialog>;
 }

@@ -2,6 +2,7 @@ from alembic import context
 from app.config import get_settings
 from app.db import get_engine
 from app.models import Base
+from app import operations_models  # noqa: F401 — register operational metadata
 
 if context.is_offline_mode():
     context.configure(url=get_settings().sqlalchemy_url, target_metadata=Base.metadata, literal_binds=True)

@@ -16,7 +16,6 @@ if (-not (Test-Path -LiteralPath $vitePath)) {
 }
 
 Write-Host "IC Group admin: http://localhost:$Port/admin"
-Write-Host "IC Group demo (without backend): http://localhost:$Port/demo/admin"
 Push-Location -LiteralPath $frontendPath
 try {
     & $nodePath $vitePath --host 127.0.0.1 --port $Port --strictPort

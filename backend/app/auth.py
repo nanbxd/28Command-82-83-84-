@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .db import get_db
+from .config import get_settings
 from .models import AuthAttempt, AuthSession, Organization, User
 from .request_schemas import LoginInput, Profile, RegisterInput, SessionOutput
 
@@ -34,7 +35,7 @@ def digest(value: str) -> str:
 def current_user(db: Db, credentials: Credentials) -> User:
     token_hash = digest(credentials.credentials) if credentials else ""
     user = db.scalar(select(User).join(AuthSession, AuthSession.user_id == User.id).where(
-        AuthSession.token_hash == token_hash, AuthSession.expires_at > utcnow()))
+        AuthSession.token_hash == token_hash, AuthSession.expires_at > utcnow(), User.is_active.is_(True)))
     if not user:
         raise HTTPException(401, "Войдите в аккаунт, чтобы отправить заявку.", headers={"WWW-Authenticate": "Bearer"})
     return user
@@ -44,12 +45,21 @@ CurrentUser = Annotated[User, Depends(current_user)]
 
 
 def manager_user(user: CurrentUser):
-    if user.role != "manager":
+    if user.role not in {"manager", "superadmin"}:
         raise HTTPException(403, "Доступ только для сотрудников IC Group.")
     return user
 
 
 Manager = Annotated[User, Depends(manager_user)]
+
+
+def superadmin_user(user: CurrentUser):
+    if user.role != "superadmin":
+        raise HTTPException(403, "Управление администраторами доступно только суперадминистратору.")
+    return user
+
+
+Superadmin = Annotated[User, Depends(superadmin_user)]
 
 
 def throttle(db: Session, request: Request, email: str):
@@ -80,11 +90,11 @@ def make_session(db: Session, user: User, response: Response):
 @router.post("/register", response_model=SessionOutput, status_code=201)
 def register(data: RegisterInput, request: Request, response: Response, db: Db):
     throttle(db, request, data.email)
-    if db.scalar(select(User.id).where(User.email == data.email)):
+    if data.email == get_settings().superadmin_email.strip().lower() or db.scalar(select(User.id).where(User.email == data.email)):
         raise HTTPException(409, "Не удалось зарегистрироваться с этим email. Попробуйте войти.")
     organization_id = str(uuid4())
     # Company names are descriptions, never proof of membership in an existing tenant.
-    db.add(Organization(id=organization_id, name=data.company, is_demo=False))
+    db.add(Organization(id=organization_id, name=data.company))
     db.flush()
     user = User(id=str(uuid4()), organization_id=organization_id, email=data.email,
         password_hash=password_hasher.hash(data.password), name=data.name, phone=data.phone,
@@ -103,7 +113,7 @@ def login(data: LoginInput, request: Request, response: Response, db: Db):
     throttle(db, request, data.email)
     user = db.scalar(select(User).where(User.email == data.email))
     valid = password_hasher.verify(data.password, user.password_hash if user else dummy_hash)
-    if not user or not valid:
+    if not user or not valid or not user.is_active:
         raise HTTPException(401, "Неверный email или пароль.")
     return make_session(db, user, response)
 

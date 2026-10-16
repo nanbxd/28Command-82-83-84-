@@ -19,5 +19,7 @@ services:
           property: connectionString
       - key: FRONTEND_ORIGIN
         sync: false
-      - key: DEMO_MODE
-        value: "true"
+      - key: SUPERADMIN_EMAIL
+        sync: false
+      - key: SUPERADMIN_PASSWORD
+        sync: false
