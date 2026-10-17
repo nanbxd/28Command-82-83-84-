@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
+import { preparePhoto } from '../../lib/photos';
 import { api, fileBlob } from '../../lib/api';
 import { useAction } from './Portal';
 import { fileLabels, time, type ServiceFile } from './types';
@@ -9,18 +10,26 @@ export function UploadFile({ projectId, kind, visitId, complaintId, period = '',
 }) {
   const action = useAction();
   const [file, setFile] = useState<File | null>(null);
+  const [stage, setStage] = useState('');
+  const [transfer, setTransfer] = useState('');
   const photo = ['before', 'after', 'complaint'].includes(kind);
   return <form className="portal-upload" onSubmit={async e => {
     e.preventDefault(); if (!file) return;
+    setTransfer('');
     const params = new URLSearchParams({ kind, name: file.name, period });
     if (visitId) params.set('visit_id', visitId);
     if (complaintId) params.set('complaint_id', complaintId);
-    if (await action.run(() => {
+    if (await action.run(async () => {
       if (file.size > 8 * 1024 * 1024) throw new Error('Максимальный размер файла — 8 МБ.');
-      return api(`/projects/${projectId}/files?${params}`, { method: 'POST', body: file });
+      setStage(photo ? 'Подготавливаем фото…' : 'Загружаем…');
+      const payload = photo ? await preparePhoto(file) : file;
+      params.set('name', payload.name);
+      setTransfer(`Отправляем ${(payload.size / 1024 / 1024).toFixed(2)} МБ${payload.size < file.size ? ` вместо ${(file.size / 1024 / 1024).toFixed(2)} МБ` : ''}.`);
+      setStage('Загружаем…');
+      return api(`/projects/${projectId}/files?${params}`, { method: 'POST', body: payload });
     }, 'Файл сохранён.')) onSaved();
-  }}><label className="field">{fileLabels[kind]} · {photo ? 'JPEG, PNG, WebP' : 'PDF'}, до 8 МБ<input type="file" required accept={photo ? 'image/jpeg,image/png,image/webp' : 'application/pdf'} onChange={e => setFile(e.target.files?.[0] || null)} /></label>
-    <button className="ad-button" disabled={!file || action.busy || kind === 'avr' && !period.trim()}><Upload size={16} />{action.busy ? 'Загружаем…' : 'Загрузить файл'}</button>{action.feedback}</form>;
+  }}><label className="field">{fileLabels[kind]} · {photo ? 'JPEG, PNG, WebP' : 'PDF'}, до 8 МБ<input type="file" required disabled={action.busy} accept={photo ? 'image/jpeg,image/png,image/webp' : 'application/pdf'} onChange={e => setFile(e.target.files?.[0] || null)} /></label>
+    <button className="ad-button" disabled={!file || action.busy || kind === 'avr' && !period.trim()}><Upload size={16} />{action.busy ? stage || 'Подготавливаем…' : 'Загрузить файл'}</button>{action.busy && <p aria-live="polite">{transfer || 'Проверяем изображение перед отправкой.'}</p>}{action.feedback}</form>;
 }
 export function DownloadFile({ file }: { file: ServiceFile }) {
   const action = useAction();

@@ -46,8 +46,23 @@ test('admin assigns contractor, contractor schedules zones, workers report, clie
   for(let i=0;i<2;i++){ const group=plan.getByRole('group',{name:`Задание ${i+1}`}); await group.getByLabel('Зона',{exact:true}).fill(i?'Уборная второго этажа':'Первый этаж'); await group.getByLabel('Работник',{exact:true}).selectOption(workers[i].user.id); await group.getByLabel('Начало',{exact:true}).fill('2026-11-01T09:00'); await group.getByLabel('Окончание',{exact:true}).fill('2026-11-01T11:00'); await group.getByLabel('Обязанности').fill('Вымыть пол'); }
   await capture(c,'plan-desktop'); await c.setViewportSize({width:390,height:844}); await capture(c,'plan-mobile'); await c.setViewportSize({width:1440,height:1000}); await plan.getByRole('button',{name:'Сохранить график'}).click(); await expect(plan).not.toBeVisible();
   await expect(c.getByRole('button',{name:'Подтвердить завершение клининга'})).toBeDisabled(); await capture(c,'schedule-desktop');
-  for(let i=0;i<2;i++){ const ctx=await browser.newContext({baseURL:test.info().project.use.baseURL,viewport:{width:390,height:844}}); const w=await ctx.newPage(); await w.addInitScript(t=>sessionStorage.setItem('ic-session',t),workers[i].access_token); await w.goto(`/work/projects/${project.id}`);
-    const upload=async (label:RegExp)=>{const input=w.getByLabel(label); await input.setInputFiles(photo); const form=input.locator('xpath=ancestor::form'); await form.getByRole('button',{name:'Загрузить файл'}).click(); await expect(form.getByRole('status')).toContainText('Файл сохранён.');};
+  await page.getByRole('button',{name:'Заблокировать объект',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Разблокировать объект',exact:true})).toBeVisible();
+  await c.reload(); await expect(c.getByRole('button',{name:'Запланировать клининг'})).toBeDisabled();
+  await capture(page,'blocked-admin-desktop'); await c.setViewportSize({width:390,height:844}); await capture(c,'blocked-contractor-mobile'); await c.setViewportSize({width:1440,height:1000});
+  await page.getByRole('button',{name:'Разблокировать объект',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Заблокировать объект',exact:true})).toBeVisible();
+  const base64 = await c.evaluate(async () => {
+    const canvas = document.createElement('canvas'); canvas.width = 3000; canvas.height = 2200;
+    const ctx = canvas.getContext('2d')!; const pixels = ctx.createImageData(canvas.width, canvas.height);
+    let seed = 12345;
+    for (let i=0;i<pixels.data.length;i+=4) { for(let j=0;j<3;j++) { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; pixels.data[i+j] = seed & 255; } pixels.data[i+3]=255; }
+    ctx.putImageData(pixels,0,0); return canvas.toDataURL('image/jpeg',0.92).split(',')[1];
+  });
+  const largePhoto = { name:'camera-5mb.jpg', mimeType:'image/jpeg', buffer:Buffer.from(base64,'base64') };
+  expect(largePhoto.buffer.length).toBeGreaterThan(5_000_000); expect(largePhoto.buffer.length).toBeLessThan(8*1024*1024);
+  for(let i=0;i<2;i++){ const ctx=await browser.newContext({baseURL:test.info().project.use.baseURL,viewport:{width:390,height:844}}); const w=await ctx.newPage(); await w.addInitScript(t => { sessionStorage.setItem('ic-session', t); const original = window.fetch; window.fetch = (input, options) => { if(options?.body instanceof Blob && String(input).includes('/files?')) Object.assign(window, { __uploadBytes: options.body.size }); return original(input, options); }; }, workers[i].access_token); await w.goto(`/work/projects/${project.id}`);
+    const upload=async (label:RegExp)=>{const input=w.getByLabel(label); await input.setInputFiles(i === 0 ? largePhoto : photo); const form=input.locator('xpath=ancestor::form'); const transfer = w.waitForRequest(r => r.method() === 'POST' && r.url().includes('/files?')); const started = Date.now(); await form.getByRole('button',{name:'Загрузить файл'}).click(); await transfer; await expect(form.getByRole('status')).toContainText('Файл сохранён.'); if(i===0) { const bytes = await w.evaluate(() => (window as Window & { __uploadBytes: number }).__uploadBytes); expect(bytes).toBeGreaterThan(0); expect(bytes).toBeLessThan(largePhoto.buffer.length / 2); console.log(JSON.stringify({originalBytes:largePhoto.buffer.length,uploadedBytes:bytes,elapsedMs:Date.now()-started})); }};
     await expect(w.getByRole('button',{name:'Начать уборку',exact:true})).toBeDisabled(); await upload(/^До уборки ·/); await w.getByRole('button',{name:'Начать уборку',exact:true}).click(); await expect(w.getByRole('button',{name:'Завершить и отправить отчёт'})).toBeDisabled(); await w.getByLabel('Вымыть пол',{exact:true}).check(); await upload(/^После уборки ·/); if(i===0) await capture(w,'worker-mobile'); await w.getByRole('button',{name:'Завершить и отправить отчёт'}).click(); await expect(w.getByText('Отчёт на проверке',{exact:true})).toBeVisible(); await ctx.close();
     await c.reload(); if(i===0) await expect(c.getByRole('button',{name:'Подтвердить завершение клининга'})).toBeDisabled();
   }

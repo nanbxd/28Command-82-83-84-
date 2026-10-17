@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import AwareDatetime, Field, model_validator
 from sqlalchemy import select
+from starlette.concurrency import run_in_threadpool
 
 from .auth import CurrentUser, Db, Manager, utcnow
 from .models import Organization, ServiceRequest, User
@@ -37,9 +38,19 @@ def project_access(db, user, project_id):
     raise HTTPException(404, "Объект не найден.")
 
 
+def writable_project(db, user, project_id):
+    project_access(db, user, project_id)
+    project = db.scalar(select(Project).where(Project.id == project_id).with_for_update().execution_options(populate_existing=True))
+    if project.is_blocked:
+        raise HTTPException(409, "Объект заблокирован администратором. Выполнение работ приостановлено.")
+    return project
+
+
 def visit_access(db, user, visit_id, lock=False):
     if lock:
         current = db.get(Visit, visit_id)
+        if current:
+            writable_project(db, user, current.project_id)
         if current and current.run_id:
             db.scalar(select(CleaningRun).where(CleaningRun.id == current.run_id).with_for_update())
     query = select(Visit).where(Visit.id == visit_id)
@@ -92,13 +103,35 @@ def project_output(db, user, row):
     finished = [*finished, *db.scalars(select(CleaningRun.completed_at).where(CleaningRun.project_id == row.id, CleaningRun.completed_at.is_not(None)))]
     next_visit = next(iter(sorted([v for v in visits if v.status == "planned"], key=lambda v: v.planned_start)), None)
     result = {key: getattr(row, key) for key in ("id", "request_id", "name", "details", "status", "plan", "service_start", "service_end", "created_at")}
-    result.update(contractor_id=row.contractor_id, contractor_name=db.get(User, row.contractor_id).name if row.contractor_id else None, company=db.get(Organization, row.organization_id).name,
+    result.update(is_blocked=row.is_blocked, blocking_history=row.blocking_history, contractor_id=row.contractor_id, contractor_name=db.get(User, row.contractor_id).name if row.contractor_id else None, company=db.get(Organization, row.organization_id).name,
         last_cleaning=max(finished) if finished else None,
         next_cleaning=next_visit.planned_start if next_visit else None,
-        cleaning_now=any(v.status == "in_progress" for v in visits))
+        cleaning_now=not row.is_blocked and any(v.status == "in_progress" for v in visits))
     if user.role not in {"worker", "contractor"}:
         result.update({key: getattr(row, key) for key in ("contract_number", "contract_start", "contract_end", "price", "payment_terms")})
     return result
+
+
+@router.get("/staff/requests/{request_id}/projects")
+def request_projects(request_id: str, user: Manager, db: Db):
+    if not db.get(ServiceRequest, request_id):
+        raise HTTPException(404, "Заявка не найдена.")
+    return [project_output(db, user, row) for row in db.scalars(select(Project).where(Project.request_id == request_id).order_by(Project.object_index))]
+
+
+class ProjectAccessInput(StrictModel):
+    is_blocked: bool
+
+
+@router.patch("/staff/projects/{project_id}/access")
+def set_project_access(project_id: str, data: ProjectAccessInput, user: Manager, db: Db):
+    project_access(db, user, project_id)
+    row = db.scalar(select(Project).where(Project.id == project_id).with_for_update().execution_options(populate_existing=True))
+    if row.is_blocked != data.is_blocked:
+        row.is_blocked = data.is_blocked
+        row.blocking_history = [*row.blocking_history, event(user, "blocked" if data.is_blocked else "unblocked")]
+    db.commit()
+    return project_output(db, user, row)
 
 
 @router.post("/staff/requests/{request_id}/projects")
@@ -364,6 +397,8 @@ def reply_complaint(complaint_id: str, data: ComplaintAction, user: CurrentUser,
     # Lock before reading history to preserve concurrent replies.
     db.scalar(select(Complaint).where(Complaint.id == complaint_id).with_for_update())
     row = complaint_access(db, user, complaint_id)
+    if user.role in {"worker", "contractor"}:
+        writable_project(db, user, row.project_id)
     if not data.text.strip():
         raise HTTPException(422, "Добавьте сообщение для истории обращения.")
     if (data.status or "forwarded_to" in data.model_fields_set) and user.role not in STAFF:
@@ -385,7 +420,25 @@ async def upload_file(project_id: str, request: Request, user: CurrentUser, db: 
         kind: Literal["before", "after", "contract", "attachment", "avr", "complaint"],
         name: str = Query(min_length=1, max_length=240), visit_id: str | None = None,
         complaint_id: str | None = None, period: str = Query("", max_length=120)):
+    data = bytearray()
+    async for chunk in request.stream():
+        if len(data) + len(chunk) > MAX_FILE:
+            raise HTTPException(413, "Максимальный размер файла — 8 МБ.")
+        data.extend(chunk)
+    if not data:
+        raise HTTPException(422, "Выберите непустой файл.")
+    return await run_in_threadpool(store_upload, db, user, project_id, kind, name, visit_id, complaint_id, period, bytes(data))
+
+
+def store_upload(db, user, project_id, kind, name, visit_id, complaint_id, period, data):
+    # Receiving a large body may take time; recheck account blocks before saving.
+    db.refresh(user)
+    parent = db.get(User, user.contractor_id, populate_existing=True) if user.contractor_id else None
+    if not user.is_active or (user.contractor_id and (not parent or not parent.is_active)):
+        raise HTTPException(401, "Доступ к аккаунту заблокирован.")
     project_access(db, user, project_id)
+    if user.role in {"worker", "contractor"}:
+        writable_project(db, user, project_id)
     if kind in {"before", "after"}:
         visit = visit_access(db, user, visit_id, lock=True)
         if visit.run_id and user.id != visit.worker_id:
@@ -402,13 +455,6 @@ async def upload_file(project_id: str, request: Request, user: CurrentUser, db: 
         raise HTTPException(403, "Документы загружает сотрудник IC Group.")
     if kind == "avr" and not period.strip():
         raise HTTPException(422, "Укажите период акта.")
-    data = bytearray()
-    async for chunk in request.stream():
-        if len(data) + len(chunk) > MAX_FILE:
-            raise HTTPException(413, "Максимальный размер файла — 8 МБ.")
-        data.extend(chunk)
-    if not data:
-        raise HTTPException(422, "Выберите непустой файл.")
     if kind in {"before", "after", "complaint"}:
         try:
             with Image.open(BytesIO(data)) as picture:
@@ -417,7 +463,9 @@ async def upload_file(project_id: str, request: Request, user: CurrentUser, db: 
                 picture.load()
                 # Normalize image payload and remove metadata (including location EXIF).
                 output = BytesIO()
-                ImageOps.exif_transpose(picture).convert("RGB").save(output, format="JPEG", quality=88)
+                normalized = ImageOps.exif_transpose(picture).convert("RGB")
+                normalized.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+                normalized.save(output, format="JPEG", quality=82)
                 data = output.getvalue()
                 if len(data) > MAX_FILE:
                     raise ValueError()
@@ -495,7 +543,7 @@ class RunInput(StrictModel):
 @router.post("/projects/{project_id}/runs", status_code=201)
 def create_run(project_id: str, data: RunInput, user: CurrentUser, db: Db):
     db.scalar(select(Project).where(Project.id == project_id).with_for_update())
-    project = project_access(db, user, project_id)
+    project = writable_project(db, user, project_id)
     if user.role != "contractor" or project.contractor_id != user.id:
         raise HTTPException(403, "График составляет закреплённый субподрядчик.")
     if project.status in {"paused", "completed"}:
@@ -523,10 +571,11 @@ def create_run(project_id: str, data: RunInput, user: CurrentUser, db: Db):
 
 @router.post("/runs/{run_id}/complete")
 def complete_run(run_id: str, user: CurrentUser, db: Db):
-    run = db.scalar(select(CleaningRun).where(CleaningRun.id == run_id).with_for_update())
+    run = db.get(CleaningRun, run_id)
     if not run:
         raise HTTPException(404, "Уборка не найдена.")
-    project_access(db, user, run.project_id)
+    writable_project(db, user, run.project_id)
+    run = db.scalar(select(CleaningRun).where(CleaningRun.id == run_id).with_for_update().execution_options(populate_existing=True))
     if user.role != "contractor" or run.contractor_id != user.id:
         raise HTTPException(403, "Клининг подтверждает субподрядчик.")
     if run.cancelled_at:

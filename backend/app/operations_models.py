@@ -1,7 +1,7 @@
 """Operational records. Client ownership is always inherited from a submitted request."""
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, JSON, Date, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from .models import Base
 
@@ -10,6 +10,8 @@ class Project(Base):
     __tablename__ = "projects"
     __table_args__ = (UniqueConstraint("request_id", "object_index", name="uq_project_request_object"),)
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    blocking_history: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
     contractor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     request_id: Mapped[str] = mapped_column(ForeignKey("service_requests.id"), index=True)
     object_index: Mapped[int] = mapped_column(Integer)

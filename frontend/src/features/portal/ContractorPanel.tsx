@@ -10,13 +10,13 @@ export function ContractorPanel({ project: p, reload }: { project: ProjectDetail
   const contractor = user?.role === 'contractor';
   return <section className="portal-panel contractor-panel"><div className="portal-row"><div><h2>{contractor ? 'График и зоны уборки' : 'Организация клининга'}</h2><p>Субподрядчик: {p.contractor_name || 'Ещё не закреплён'}</p></div><div className="portal-actions">
     {isStaff(user?.role) && <button className="ad-button" onClick={() => setDialog('assign')}>Закрепить субподрядчика</button>}
-    {contractor && <button className="ad-button ad-button-primary" onClick={() => setDialog('plan')}>Запланировать клининг</button>}</div></div>
+    {contractor && <button className="ad-button ad-button-primary" disabled={p.is_blocked} onClick={() => setDialog('plan')}>Запланировать клининг</button>}</div></div>
     {p.runs.length ? <div className="cleaning-runs">{p.runs.filter(r => user?.role !== 'worker' || p.visits.some(v => v.run_id === r.id)).map(r => {
       const tasks = p.visits.filter(v => v.run_id === r.id && v.status !== 'cancelled');
       const done = tasks.filter(v => ['submitted', 'accepted'].includes(v.status)).length;
       return <article className="cleaning-run" key={r.id}><h3>{r.name}</h3><p>{r.cancelled_at ? 'Клининг отменён' : r.completed_at ? `Клининг полностью проведён · ${time(r.completed_at)}` : `${user?.role === 'worker' ? 'Мои зоны' : 'Выполнено зон'}: ${done} из ${tasks.length}`}</p>
         <ul>{tasks.map(v => <li key={v.id}>{v.zone} · {v.worker_name} · {time(v.planned_start)} — {time(v.planned_end)}</li>)}</ul>
-        {contractor && !r.completed_at && !r.cancelled_at && <><button className="ad-button ad-button-primary" disabled={action.busy || !tasks.length || done !== tasks.length} onClick={() => void action.run(async () => { await api(`/runs/${r.id}/complete`, { method: 'POST' }); reload(); }, 'Клининг подтверждён. Клиент видит результат.')}>Подтвердить завершение клининга</button>{done !== tasks.length && <p className="portal-muted">Подтверждение станет доступно после отчётов по всем зонам.</p>}</>}
+        {contractor && !r.completed_at && !r.cancelled_at && <><button className="ad-button ad-button-primary" disabled={p.is_blocked || action.busy || !tasks.length || done !== tasks.length} onClick={() => void action.run(async () => { await api(`/runs/${r.id}/complete`, { method: 'POST' }); reload(); }, 'Клининг подтверждён. Клиент видит результат.')}>Подтвердить завершение клининга</button>{done !== tasks.length && <p className="portal-muted">Подтверждение станет доступно после отчётов по всем зонам.</p>}</>}
       </article>;
     })}</div> : <p className="portal-muted">{contractor ? 'Создайте уборку, укажите зоны, работников и время выполнения.' : 'Запланированные уборки и подтверждение завершения появятся здесь.'}</p>}
     {action.feedback}

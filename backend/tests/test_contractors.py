@@ -1,6 +1,6 @@
 ﻿from sqlalchemy import select
 from app.models import User
-from app.operations_models import CleaningRun, Visit
+from app.operations_models import CleaningRun, Visit, Project
 from test_requests import account, client, db, headers, submission
 from test_operations import elevate, photo_bytes
 
@@ -147,3 +147,48 @@ def test_admin_cannot_schedule_or_mutate_work(client, db, submission):
         assert client.post(f'/api/v1/visits/{visit.id}/actions', headers=admin, json={'action':action}).status_code == 403
     assert client.post(f'/api/v1/projects/{project}/files', headers=admin, params={'visit_id':visit.id,'kind':'before','name':'photo.png'}, content=photo_bytes()).status_code == 403
     assert client.get(f'/api/v1/projects/{project}', headers=admin).status_code == 200
+
+
+def test_object_block_stops_all_operational_writes_and_preserves_history(client, db, submission):
+    owner, admin, contractor, cid, worker, wid, other, oid, project = setup(client, db, submission)
+    access = f'/api/v1/staff/projects/{project}/access'
+    listing = f'/api/v1/staff/requests/' + db.get(Project, project).request_id + '/projects'
+    assert len(client.get(listing, headers=admin).json()) == 1
+    assert client.get(listing, headers=contractor).status_code == 403
+    item = dict(worker_id=wid, zone='Первый этаж', planned_start='2026-11-01T09:00:00+05:00', planned_end='2026-11-01T11:00:00+05:00', checklist=['Вымыть пол'])
+    rid = client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Уборка', 'assignments':[item]}).json()['id']
+    visit = db.scalar(select(Visit).where(Visit.run_id == rid))
+    for auth in (contractor, worker, owner):
+        assert client.patch(access, headers=auth, json={'is_blocked': True}).status_code == 403
+    blocked = client.patch(access, headers=admin, json={'is_blocked': True})
+    assert blocked.status_code == 200 and blocked.json()['is_blocked']
+    assert len(blocked.json()['blocking_history']) == 1
+    assert len(client.patch(access, headers=admin, json={'is_blocked': True}).json()['blocking_history']) == 1
+    assert client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Ещё уборка', 'assignments':[item]}).status_code == 409
+    assert client.post(f'/api/v1/visits/{visit.id}/actions', headers=worker, json={'action':'start'}).status_code == 409
+    assert client.post(f'/api/v1/visits/{visit.id}/actions', headers=contractor, json={'action':'cancel'}).status_code == 409
+    assert client.post(f'/api/v1/runs/{rid}/complete', headers=contractor).status_code == 409
+    assert client.post(f'/api/v1/projects/{project}/files', headers=worker, params={'kind':'before','visit_id':visit.id,'name':'photo.jpg'}, content=photo_bytes()).status_code == 409
+    for auth in (admin, contractor, owner, worker):
+        result = client.get(f'/api/v1/projects/{project}', headers=auth)
+        assert result.status_code == 200 and result.json()['is_blocked']
+    other_admin, _ = elevate(client, db, 'second-manager@example.com', 'manager')
+    unblocked = client.patch(access, headers=other_admin, json={'is_blocked': False})
+    assert not unblocked.json()['is_blocked'] and len(unblocked.json()['blocking_history']) == 2
+    assert client.post(f'/api/v1/projects/{project}/files', headers=worker, params={'kind':'before','visit_id':visit.id,'name':'photo.jpg'}, content=photo_bytes()).status_code == 201
+
+
+def test_account_block_follows_creation_permissions_and_revokes_sessions(client, db, submission):
+    owner, admin, contractor, cid, worker, wid, other, oid, project = setup(client, db, submission)
+    admin_id = db.scalar(select(User.id).where(User.email == 'manager@example.com'))
+    root, _ = elevate(client, db, 'root@example.com', 'superadmin')
+    assert client.patch(f'/api/v1/staff/accounts/{admin_id}', headers=admin, json={'is_active':False}).status_code == 404
+    assert client.patch(f'/api/v1/staff/accounts/{cid}', headers=contractor, json={'is_active':False}).status_code == 404
+    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=admin, json={'is_active':False}).status_code == 404
+    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=other, json={'is_active':False}).status_code == 404
+    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=contractor, json={'is_active':False}).status_code == 200
+    assert client.get('/api/v1/auth/me', headers=worker).status_code == 401
+    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=contractor, json={'is_active':True}).status_code == 200
+    assert client.get('/api/v1/auth/me', headers=worker).status_code == 401
+    assert client.patch(f'/api/v1/staff/accounts/{admin_id}', headers=root, json={'is_active':False}).status_code == 200
+    assert client.get('/api/v1/auth/me', headers=admin).status_code == 401

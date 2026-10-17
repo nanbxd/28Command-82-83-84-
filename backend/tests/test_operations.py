@@ -221,3 +221,15 @@ def test_real_jpeg_before_start_and_after_completion(client, flow):
             assert 'фото до и после' in incomplete.json()['detail']
     completed = client.post(actions, headers=f['worker'], json={'action':'submit', 'checked':[0,1], 'notes':''})
     assert completed.status_code == 200, completed.text
+
+
+def test_large_photo_is_stored_at_bounded_resolution(client, flow):
+    image = Image.new('RGB', (4000, 3000), color='white')
+    stream = BytesIO(); image.save(stream, format='JPEG')
+    response = client.post(f'/api/v1/projects/{flow["project"]}/files', headers=flow['worker'],
+        params={'kind':'before', 'visit_id':flow['visit'], 'name':'large.jpg'}, content=stream.getvalue())
+    assert response.status_code == 201, response.text
+    downloaded = client.get('/api/v1/files/' + response.json()['id'], headers=flow['worker'])
+    with Image.open(BytesIO(downloaded.content)) as stored:
+        assert stored.size == (2048, 1536)
+    assert len(downloaded.content) < len(stream.getvalue())
