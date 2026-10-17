@@ -69,6 +69,7 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
     ...(audience === 'staff' ? [{ href: '/admin/requests', label: 'Заявки клиентов', icon: Inbox }] : []),
     { href: `${base}/projects`, label: audience === 'worker' ? 'Мои объекты и уборки' : 'Объекты', icon: Building2 },
     ...(audience === 'worker' ? [{ href: '/work/ic-coins', label: 'IC-coins', icon: Coins }] : []),
+    ...(audience === 'contractor' ? [{ href: '/contractor/ic-coins', label: 'Бонусы команды', icon: Coins }] : []),
     ...(audience === 'client' ? [{ href: '/requests', label: 'Мои заявки', icon: Inbox }] : []),
     { href: `${base}/complaints`, label: 'Обращения по качеству', icon: MessageSquareText },
     ...(['superadmin', 'manager', 'contractor'].includes(auth.user?.role || '') ? [{ href: `${base}/accounts`, label: audience === 'contractor' ? 'Моя команда' : 'Аккаунты сотрудников', icon: UsersRound }] : []),

@@ -16,6 +16,7 @@ from .auth import router as auth_router
 from .requests import router as requests_router
 from .operations import router as operations_router
 from .accounts import router as accounts_router
+from .coins import router as coins_router
 
 app = FastAPI(title="IC Group Client API", version="0.1.0")
 app.add_middleware(CORSMiddleware,
@@ -27,6 +28,7 @@ app.include_router(auth_router)
 app.include_router(requests_router)
 app.include_router(operations_router)
 app.include_router(accounts_router)
+app.include_router(coins_router)
 
 
 @app.middleware("http")

@@ -15,6 +15,7 @@ const ProjectPage = React.lazy(() => import('./features/portal/ProjectPage'));
 const Accounts = React.lazy(() => import('./features/portal/Accounts'));
 const Complaints = React.lazy(() => import('./features/portal/Complaints'));
 const CoinsPage = React.lazy(() => import('./features/coins/CoinsPage'));
+const CoinsReviewPage = React.lazy(() => import('./features/coins/CoinsReviewPage'));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </Route>
         <Route path="/contractor" element={<Portal audience="contractor" />}>
           <Route index element={<Navigate to="projects" replace />} />
+          <Route path="ic-coins" element={<CoinsReviewPage />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectPage />} />
           <Route path="accounts" element={<Accounts />} />

@@ -8,6 +8,7 @@ from .auth import Db, Manager, CurrentUser, password_hasher, utcnow
 from .models import AuthSession, User, Organization
 from .request_schemas import RegisterInput, StrictModel, Profile
 from .config import get_settings
+from .coins import grant_welcome
 
 router = APIRouter(prefix="/api/v1/staff", tags=["Accounts"])
 
@@ -58,6 +59,9 @@ def create_account(data: AccountInput, user: CurrentUser, db: Db):
         is_active=True, created_at=utcnow())
     db.add(account)
     try:
+        db.flush()
+        if account.role == "worker":
+            grant_welcome(db, account.id)
         db.commit()
     except IntegrityError:
         db.rollback()
