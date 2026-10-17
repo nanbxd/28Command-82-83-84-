@@ -353,3 +353,10 @@
 - **Ограничения:** реальные заказы магазина сохраняются со списанием монет и статусом «Ожидает выдачи», но автоматическая выдача товаров/купонов не подключена. Старые работники не получают стартовые монеты задним числом; аккаунт без создавшего его субподрядчика не может отправить запрос на бонусы. Старые браузерные демоданные не переносятся.
 - **Проверка участником:** пока не подтверждена.
 - **Файлы:** backend/app/coins.py, backend/app/coins_models.py, backend/app/accounts.py, backend/app/main.py, backend/migrations/env.py, backend/migrations/versions/c28a14f03003_ic_coins.py, backend/tests/test_coins.py, frontend/src/features/coins/CoinsPage.tsx, frontend/src/features/coins/CoinsReviewPage.tsx, frontend/src/features/coins/shared.ts, frontend/src/features/coins/coins.css, frontend/src/features/portal/Portal.tsx, frontend/src/main.tsx, frontend/tests/coins.spec.ts, README.md, PRODUCT.md, .ai/session-notes.md.
+
+### 05:51 [задача] — Удаление нижних ссылок из кабинетов исполнителей
+- **Запрос участника:** «Убрать на странице с личным кабинетом работника "Новая заявка" и "Основной заказ"
+Убрать на странице с личным кабинетом субподрядчика "Новая заявка" и "Основной заказ"».
+- **Что сделал ИИ:** в frontend/src/features/portal/Portal.tsx ограничил показ нижнего блока боковой панели ролями client/staff. Ссылки «Новая заявка» и «Основной сайт» больше не отображаются в кабинетах worker/contractor на всех вложенных страницах. «Основной заказ» трактован как существующая ссылка «Основной сайт», об этом сообщено участнику.
+- **Проверка:** TypeScript и production-сборка Vite прошли. Код остальных разделов не менялся.
+- **Файлы:** frontend/src/features/portal/Portal.tsx, .ai/session-notes.md.
