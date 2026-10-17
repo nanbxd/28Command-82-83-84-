@@ -1,4 +1,5 @@
 from typing import Annotated
+import logging
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,6 +39,8 @@ async def private_responses(request, call_next):
 
 @app.exception_handler(RequestValidationError)
 async def invalid_input(_request, exception):
+    if _request.url.path.startswith("/api/v1/visits/") and _request.url.path.endswith("/actions"):
+        logging.getLogger(__name__).warning("visit_action_rejected reason=invalid_request_schema")
     # Do not reflect passwords or other submitted personal data in validation responses.
     return JSONResponse(status_code=422, content={
         "detail": "Проверьте заполненные поля и попробуйте ещё раз.",
