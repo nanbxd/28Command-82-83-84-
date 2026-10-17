@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     superadmin_password: SecretStr = SecretStr("")
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "openai/gpt-oss-120b"
+    platform_api_key: SecretStr = SecretStr("")
     model_config = SettingsConfigDict(env_file=(Path(__file__).resolve().parents[2] / '.env', Path(__file__).resolve().parents[1] / '.env'), extra="ignore")
 
     @property
