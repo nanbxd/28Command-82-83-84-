@@ -511,3 +511,23 @@
 - Проверены свежая схема и оба варианта старой ревизии: локальная база с блокировкой и отдельная схема с применёнными coins. В проверке восстановления существующая транзакция coins сохранилась.
 - Свежий визуальный reviewer: ship в рамках desktop/mobile приглашений и планирования; материальных замечаний нет. Документация обновлена с сохранением DESIGN.md и существующих токенов.
 - Участник результат пока не проверял. Новые ENV не нужны; хостинги не обновлялись. Изменения .env.example и ранее подготовленные участником изменения не отменялись.
+
+### 06:31 [находка] — Render собран со старой цепочкой миграций
+
+**Запрос участника:**
+> #12 DONE 1.4s
+> ==> Deploying...
+> ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+> /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:213: UserWarning: Revision c28a14f03003 is present more than once
+>   util.warn(
+> FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+> ==> Exited with status 255
+> ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+> /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:213: UserWarning: Revision c28a14f03003 is present more than once
+>   util.warn(
+> FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+> исправь
+
+- Проверена текущая aiqyn: исправление дублирующейся ревизии входит в 92e8432; alembic heads показывает единственную c28a14f03004. Лог участника относится к сборке, где старый файл всё ещё присутствует.
+- Добавлена проверка графа миграций на этапе Docker build без доступа к базе; три теста проверяют текущую цепочку и отказ при дубликате номера либо нескольких вершинах. Все три прошли.
+- Файлы: backend/app/check_migrations.py, backend/Dockerfile, backend/tests/test_migrations.py. Настройки Render и удалённая ветка не изменялись.
