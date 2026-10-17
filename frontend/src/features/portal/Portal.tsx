@@ -80,6 +80,7 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
     ...(audience === 'contractor' ? [{ href: '/contractor/ic-coins', label: 'Бонусы команды', icon: Coins }] : []),
     ...(audience === 'client' ? [{ href: '/requests', label: 'Мои заявки', icon: Inbox }] : []),
     { href: `${base}/complaints`, label: 'Обращения по качеству', icon: MessageSquareText },
+    { href: `${base}/support`, label: 'ИИ-поддержка', icon: MessageSquareText },
     ...(['superadmin', 'manager', 'contractor'].includes(auth.user?.role || '') ? [{ href: `${base}/accounts`, label: audience === 'contractor' ? 'Моя команда' : 'Аккаунты сотрудников', icon: UsersRound }] : []),
   ];
   return <div className="ic-admin portal"><a className="ad-skip" href="#portal-content">К содержимому кабинета</a>

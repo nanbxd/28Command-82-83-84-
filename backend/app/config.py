@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from pydantic import SecretStr
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,7 +10,9 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     superadmin_email: str = ""
     superadmin_password: SecretStr = SecretStr("")
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    groq_api_key: SecretStr = SecretStr("")
+    groq_model: str = "openai/gpt-oss-120b"
+    model_config = SettingsConfigDict(env_file=(Path(__file__).resolve().parents[2] / '.env', Path(__file__).resolve().parents[1] / '.env'), extra="ignore")
 
     @property
     def sqlalchemy_url(self) -> str:

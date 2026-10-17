@@ -23,3 +23,7 @@ services:
         sync: false
       - key: SUPERADMIN_PASSWORD
         sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b

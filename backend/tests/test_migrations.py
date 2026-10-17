@@ -6,7 +6,7 @@ from app.check_migrations import check_migrations
 
 
 def test_repository_has_one_unambiguous_migration_head():
-    assert check_migrations(Path(__file__).resolve().parents[1] / 'migrations') == 'c28a14f03004'
+    assert check_migrations(Path(__file__).resolve().parents[1] / 'migrations') == 'c28a14f03005'
 
 
 @pytest.mark.parametrize('duplicate', [True, False])
