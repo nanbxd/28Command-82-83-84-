@@ -29,7 +29,7 @@ def output(user):
 
 
 def allowed_roles(user):
-    roles = {"superadmin": {"manager", "contractor", "worker"}, "manager": {"contractor"}, "contractor": {"worker"}}.get(user.role)
+    roles = {"superadmin": {"manager", "contractor", "worker"}, "manager": {"contractor", "worker"}, "contractor": {"worker"}}.get(user.role)
     if roles is None:
         raise HTTPException(403, "Нет доступа к управлению аккаунтами.")
     return roles

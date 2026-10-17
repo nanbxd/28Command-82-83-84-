@@ -29,7 +29,7 @@ def setup(client, db, submission):
 def test_hierarchy_and_disabled_parent(client, db, submission):
     owner, admin, contractor, cid, worker, wid, other, oid, project = setup(client, db, submission)
     payload = dict(role='manager', email='illegal@example.com', password='Strong password 123', name='Invalid', phone='+77001234567', company='Test')
-    for auth, role in ((admin, 'manager'), (admin, 'worker'), (contractor, 'manager'), (contractor, 'contractor'), (worker, 'worker'), (owner, 'contractor')):
+    for auth, role in ((admin, 'manager'), (contractor, 'manager'), (contractor, 'contractor'), (worker, 'worker'), (owner, 'contractor')):
         assert client.post('/api/v1/staff/accounts', headers=auth, json={**payload, 'role': role}).status_code == 403
     assert [u['id'] for u in client.get('/api/v1/staff/accounts', headers=contractor).json()] == [wid]
     assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=other, json={'is_active': False}).status_code == 404
@@ -55,6 +55,7 @@ def test_zones_photos_completion_and_client_visibility(client, db, submission):
     own = client.get(f'/api/v1/projects/{project}', headers=worker).json()
     assert len(own['visits']) == 1
     for i, (auth, worker_id) in enumerate(((worker, wid), (worker2, wid2))):
+        assert client.post(f'/api/v1/invitations/{rid}/respond', headers=auth, json={'decision':'accept'}).status_code == 200
         visit = next(v for v in details['visits'] if v['worker_id'] == worker_id)
         action = f'/api/v1/visits/{visit["id"]}/actions'
         assert client.post(action, headers=contractor, json={'action': 'start'}).status_code == 403
@@ -81,17 +82,15 @@ def test_zones_photos_completion_and_client_visibility(client, db, submission):
     assert client.post(action, headers=auth, json={'action': 'save'}).status_code == 409
 
 
-def test_foreign_worker_and_overlap_rejected(client, db, submission):
+def test_global_worker_invited_and_same_plan_overlap_rejected(client, db, submission):
     owner, admin, contractor, cid, worker, wid, other, oid, project = setup(client, db, submission)
     _, foreign_id = create(client, other, 'worker', 'foreign-worker@example.com')
     item = dict(worker_id=foreign_id, zone='Первый этаж', planned_start='2026-11-01T09:00:00+05:00', planned_end='2026-11-01T11:00:00+05:00', checklist=['Вымыть пол'])
-    assert client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Уборка', 'assignments':[item]}).status_code == 422
-    db.rollback()
-    assert list(db.scalars(select(CleaningRun))) == []
+    assert client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Уборка', 'assignments':[item]}).status_code == 201
     item['worker_id'] = wid
     assert client.post(f'/api/v1/projects/{project}/runs', headers=contractor, json={'name':'Уборка', 'assignments':[item, {**item, 'zone':'Второй этаж'}]}).status_code == 409
     db.rollback()
-    assert list(db.scalars(select(Visit))) == []
+    assert len(list(db.scalars(select(Visit)))) == 1
 
 
 def test_cancelled_plan_and_explicit_complaint_forwarding(client, db, submission):
@@ -175,6 +174,7 @@ def test_object_block_stops_all_operational_writes_and_preserves_history(client,
     other_admin, _ = elevate(client, db, 'second-manager@example.com', 'manager')
     unblocked = client.patch(access, headers=other_admin, json={'is_blocked': False})
     assert not unblocked.json()['is_blocked'] and len(unblocked.json()['blocking_history']) == 2
+    assert client.post(f'/api/v1/invitations/{rid}/respond', headers=worker, json={'decision':'accept'}).status_code == 200
     assert client.post(f'/api/v1/projects/{project}/files', headers=worker, params={'kind':'before','visit_id':visit.id,'name':'photo.jpg'}, content=photo_bytes()).status_code == 201
 
 
@@ -184,7 +184,7 @@ def test_account_block_follows_creation_permissions_and_revokes_sessions(client,
     root, _ = elevate(client, db, 'root@example.com', 'superadmin')
     assert client.patch(f'/api/v1/staff/accounts/{admin_id}', headers=admin, json={'is_active':False}).status_code == 404
     assert client.patch(f'/api/v1/staff/accounts/{cid}', headers=contractor, json={'is_active':False}).status_code == 404
-    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=admin, json={'is_active':False}).status_code == 404
+    assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=admin, json={'is_active':True}).status_code == 200
     assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=other, json={'is_active':False}).status_code == 404
     assert client.patch(f'/api/v1/staff/accounts/{wid}', headers=contractor, json={'is_active':False}).status_code == 200
     assert client.get('/api/v1/auth/me', headers=worker).status_code == 401

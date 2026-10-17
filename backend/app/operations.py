@@ -308,7 +308,7 @@ def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
     kinds = set(db.scalars(select(StoredFile.kind).where(StoredFile.visit_id == row.id)))
     transitions = {"start": ({"planned"}, "in_progress"), "submit": ({"in_progress", "correction"}, "submitted"),
         "accept": ({"submitted"}, "accepted"), "return": ({"submitted"}, "correction"),
-        "cancel": ({"planned"}, "cancelled"), "save": ({"in_progress", "correction"}, row.status)}
+        "cancel": ({"invited", "declined", "planned"}, "cancelled"), "save": ({"in_progress", "correction"}, row.status)}
     allowed, status = transitions[data.action]
     if row.status not in allowed:
         raise HTTPException(409, "Состояние уборки изменилось. Обновите карточку.")
@@ -540,6 +540,110 @@ class RunInput(StrictModel):
     assignments: list[ZoneInput] = Field(min_length=1, max_length=100)
 
 
+CONFIRMED_VISITS = {"planned", "in_progress", "correction", "submitted", "accepted"}
+
+
+def worker_available_account(db, worker):
+    if not worker or worker.role != "worker" or not worker.is_active:
+        return False
+    parent = db.get(User, worker.contractor_id) if worker.contractor_id else None
+    return not worker.contractor_id or bool(parent and parent.is_active)
+
+
+def committed_schedule(db, worker_id, start, end):
+    return list(db.scalars(select(Visit).where(Visit.worker_id == worker_id,
+        Visit.status.in_(CONFIRMED_VISITS), Visit.planned_end > start - timedelta(days=8),
+        Visit.planned_start < end + timedelta(days=8)).execution_options(populate_existing=True)))
+
+
+@router.get("/projects/{project_id}/available-workers")
+def available_workers(project_id: str, planned_start: AwareDatetime, planned_end: AwareDatetime, user: CurrentUser, db: Db):
+    project = project_access(db, user, project_id)
+    if user.role != "contractor" or project.contractor_id != user.id:
+        raise HTTPException(403, "Работников выбирает субподрядчик объекта.")
+    start, end = planned_start.astimezone(timezone.utc), planned_end.astimezone(timezone.utc)
+    if end <= start or end - start > timedelta(hours=14):
+        raise HTTPException(422, "Укажите смену длительностью до 14 часов.")
+    result = []
+    for worker in db.scalars(select(User).where(User.role == "worker", User.is_active.is_(True)).order_by(User.name)):
+        if not worker_available_account(db, worker):
+            continue
+        # Pending invitations do not reserve time. Scheduling norms still apply.
+        try:
+            validate_schedule(committed_schedule(db, worker.id, start, end),
+                VisitInput(worker_id=worker.id, planned_start=start, planned_end=end, checklist=["Availability"]), project_id)
+        except HTTPException as exc:
+            if exc.status_code != 409:
+                raise
+            continue
+        result.append({"id": worker.id, "name": worker.name, "company": worker.company})
+    return result
+
+
+@router.get("/invitations")
+def invitations(user: CurrentUser, db: Db):
+    if user.role != "worker":
+        raise HTTPException(403, "Приглашения доступны работнику.")
+    runs = db.scalars(select(CleaningRun).where(CleaningRun.id.in_(select(Visit.run_id).where(
+        Visit.worker_id == user.id, Visit.status == "invited"))).order_by(CleaningRun.created_at.desc()))
+    result = []
+    for run in runs:
+        project = db.get(Project, run.project_id)
+        contractor = db.get(User, run.contractor_id)
+        visits = list(db.scalars(select(Visit).where(Visit.run_id == run.id, Visit.worker_id == user.id, Visit.status == "invited").order_by(Visit.planned_start)))
+        unavailable = project.is_blocked or project.status in {"paused", "completed"} or not contractor.is_active or bool(run.cancelled_at or run.completed_at)
+        result.append({"id": run.id, "name": run.name, "project_id": project.id, "project_name": project.name,
+            "address": f'{project.details["city"]}, {project.details["address"]}', "contractor_name": contractor.name,
+            "company": contractor.company, "blocked": unavailable, "expired": any(aware(v.planned_end) <= utcnow() for v in visits),
+            "visits": [visit_output(db, v) for v in visits]})
+    return result
+
+
+class InvitationDecision(StrictModel):
+    decision: Literal["accept", "decline"]
+
+
+@router.post("/invitations/{run_id}/respond")
+def respond_invitation(run_id: str, data: InvitationDecision, user: CurrentUser, db: Db):
+    if user.role != "worker":
+        raise HTTPException(403, "На приглашение отвечает работник.")
+    run = db.get(CleaningRun, run_id)
+    if not run or not db.scalar(select(Visit.id).where(Visit.run_id == run_id, Visit.worker_id == user.id)):
+        raise HTTPException(404, "Приглашение не найдено.")
+    project = writable_project(db, user, run.project_id) if data.decision == "accept" else project_access(db, user, run.project_id)
+    run = db.scalar(select(CleaningRun).where(CleaningRun.id == run_id).with_for_update().execution_options(populate_existing=True))
+    visits = list(db.scalars(select(Visit).where(Visit.run_id == run_id, Visit.worker_id == user.id).with_for_update().execution_options(populate_existing=True)))
+    pending = [v for v in visits if v.status == "invited"]
+    if not pending:
+        expected = CONFIRMED_VISITS if data.decision == "accept" else {"declined"}
+        if any(v.status in expected for v in visits) and all(v.status in expected | {"cancelled"} for v in visits):
+            return {"decision": data.decision}
+        raise HTTPException(409, "Приглашение уже изменено. Обновите список.")
+    if data.decision == "accept":
+        contractor = db.get(User, run.contractor_id, populate_existing=True)
+        if run.completed_at or run.cancelled_at or project.contractor_id != run.contractor_id or not contractor.is_active or project.status in {"paused", "completed"}:
+            raise HTTPException(409, "Приглашение больше недоступно.")
+        # Serialize acceptance across different contractors and objects for this worker.
+        db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
+        if not worker_available_account(db, user):
+            raise HTTPException(403, "Аккаунт работника заблокирован.")
+        checked = []
+        for visit in pending:
+            start, end = aware(visit.planned_start), aware(visit.planned_end)
+            if end <= utcnow():
+                raise HTTPException(409, "Время смены уже прошло. Запросите новое приглашение.")
+            item = VisitInput(worker_id=user.id, planned_start=start, planned_end=end, checklist=[c["text"] for c in visit.checklist])
+            if (project.service_start and start.astimezone(LOCAL).date() < project.service_start) or (project.service_end and end.astimezone(LOCAL).date() > project.service_end):
+                raise HTTPException(409, "Период обслуживания изменился. Запросите новое приглашение.")
+            validate_schedule(committed_schedule(db, user.id, start, end) + checked, item, project.id)
+            checked.append(visit)
+    for visit in pending:
+        visit.status = "planned" if data.decision == "accept" else "declined"
+        visit.history = [*visit.history, event(user, "invitation_" + data.decision)]
+    db.commit()
+    return {"decision": data.decision}
+
+
 @router.post("/projects/{project_id}/runs", status_code=201)
 def create_run(project_id: str, data: RunInput, user: CurrentUser, db: Db):
     db.scalar(select(Project).where(Project.id == project_id).with_for_update())
@@ -553,17 +657,22 @@ def create_run(project_id: str, data: RunInput, user: CurrentUser, db: Db):
     db.flush()
     # Stable worker lock ordering also protects against simultaneous schedules on other objects.
     workers = {w.id: w for w in db.scalars(select(User).where(User.id.in_([a.worker_id for a in data.assignments])).order_by(User.id).with_for_update())}
+    proposed = []
     for item in data.assignments:
         worker = workers.get(item.worker_id)
-        if not worker or worker.role != "worker" or worker.contractor_id != user.id or not worker.is_active:
-            raise HTTPException(422, "Назначьте действующего работника вашей команды.")
+        if not worker_available_account(db, worker):
+            raise HTTPException(422, "Выберите действующего работника.")
+        if item.planned_end <= utcnow():
+            raise HTTPException(422, "Нельзя пригласить на прошедшую смену.")
         if (project.service_start and item.planned_start.astimezone(LOCAL).date() < project.service_start) or (project.service_end and item.planned_end.astimezone(LOCAL).date() > project.service_end):
             raise HTTPException(422, "Задание выходит за период обслуживания.")
-        existing = list(db.scalars(select(Visit).where(Visit.worker_id == worker.id, Visit.status != "cancelled", Visit.planned_end > item.planned_start - timedelta(days=8), Visit.planned_start < item.planned_end + timedelta(days=8))))
+        existing = committed_schedule(db, worker.id, item.planned_start, item.planned_end) + [v for v in proposed if v.worker_id == worker.id]
         validate_schedule(existing, item, project_id)
-        db.add(Visit(id=str(uuid4()), project_id=project_id, run_id=run.id, zone=item.zone,
+        visit = Visit(id=str(uuid4()), project_id=project_id, run_id=run.id, zone=item.zone,
             worker_id=worker.id, planned_start=item.planned_start, planned_end=item.planned_end,
-            checklist=[{"text": s, "done": False} for s in item.checklist], notes="", status="planned", history=[event(user, "planned", item.zone)]))
+            checklist=[{"text": s, "done": False} for s in item.checklist], notes="", status="invited", history=[event(user, "invited", item.zone)])
+        proposed.append(visit)
+        db.add(visit)
         db.flush()
     db.commit()
     return {"id": run.id}

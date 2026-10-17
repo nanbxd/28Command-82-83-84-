@@ -22,7 +22,7 @@ export type Account = { id: string; name: string; email: string; phone: string; 
 export type Complaint = { id: string; project_id: string; project_name: string; company: string; subject: string; message: string;
   status: string; forwarded_to: string | null; history: HistoryEvent[]; created_at: string };
 export const projectLabels: Record<string, string> = { preparation: 'Подготовка', active: 'Обслуживается', paused: 'Приостановлен', completed: 'Завершён' };
-export const visitLabels: Record<string, string> = { planned: 'Запланирована', in_progress: 'Идёт уборка', submitted: 'Отчёт на проверке', accepted: 'Отчёт принят', correction: 'Нужны исправления', cancelled: 'Отменена' };
+export const visitLabels: Record<string, string> = { invited: 'Ожидает ответа работника', declined: 'Приглашение отклонено', planned: 'Смена подтверждена', in_progress: 'Идёт уборка', submitted: 'Отчёт на проверке', accepted: 'Отчёт принят', correction: 'Нужны исправления', cancelled: 'Отменена' };
 export const complaintLabels: Record<string, string> = { open: 'Новое', review: 'На рассмотрении', correction: 'Устраняем замечания', closed: 'Закрыто' };
 export const fileLabels: Record<string, string> = { before: 'До уборки', after: 'После уборки', contract: 'Договор', attachment: 'Приложение', avr: 'АВР', complaint: 'Фото к обращению' };
 export const documentLabels: Record<string, string> = { uploaded: 'Загружен', signed: 'Подписание подтверждено', accepted: 'Принят', rejected: 'Отклонён' };
