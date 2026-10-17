@@ -5,6 +5,7 @@ from app.models import Base
 from app import operations_models  # noqa: F401 — register operational metadata
 from app import coins_models  # noqa: F401 — register IC-coins metadata
 from app import support_models  # noqa: F401
+from app import settlement_models  # noqa: F401
 
 if context.is_offline_mode():
     context.configure(url=get_settings().sqlalchemy_url, target_metadata=Base.metadata, literal_binds=True)

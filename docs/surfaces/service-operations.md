@@ -86,3 +86,7 @@ Operate; расширение текущей визуальной системы
 Поддерживаются загрузка, ошибка получения истории, ожидание ответа, сохранённая ошибка провайдера с повтором, отсутствие ключа и предыдущие сообщения. Сообщения сохраняются в аккаунте; перед отправкой показано, что их обрабатывает Groq, и напоминание не отправлять секреты. Тексты ответов являются выводом модели, а не подтверждением операции над объектом. Основной контракт: объяснять доступные действия в рамках серверной роли; не обещать выполнение операций или знание живых статусов.
 
 Независимый finish review завершён с вердиктом `Ship` (результат передан основным исполнителем). Проверены пять снимков в `.impeccable/review/`: `support-empty-desktop.png`, `support-client-desktop.png`, `support-client-mobile.png`, `support-worker-mobile.png`, `support-retry-desktop.png`. Снимки служат свидетельством проверки; новых растровых ресурсов продукта и общих токенов нет. DESIGN.md и .impeccable/design.json сохранены без изменений.
+
+## Acts and settlements extension
+
+Operate surface within the existing project card, using incumbent panels, fields, badges and responsive two-column forms. Shows actual accepted work, explicit pricing basis, immutable act calculations, recipient acceptance, payment progression and private financial scopes. Worker payments use the educational Employment Platform; manual confirmation is reserved for client/contractor settlement records. Final rendered review and documenter pass were waived by the user's explicit request to stop all checks. Existing design tokens remain unchanged.

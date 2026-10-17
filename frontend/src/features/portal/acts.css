@@ -1,0 +1,15 @@
+.act-section { display: grid; gap: 20px; }
+.act-section .portal-panel { min-width: 0; }
+.act-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.act-line { border: 1px solid #e0e4db; border-radius: 12px; padding: 18px; margin: 12px 0; min-width: 0; }
+.act-line legend { padding: 0 8px; font-weight: 600; font-size: 13px; }
+.act-line .field { margin-top: 12px; }
+.act-check { display: flex; align-items: center; gap: 10px; }
+.act-check input { width: 18px; height: 18px; flex-shrink: 0; }
+.act-confirm { background: #f7f8f5; padding: 20px; border-radius: 12px; margin: 16px 0; }
+.act-card { overflow-wrap: anywhere; }
+.act-card details { margin-top: 18px; }
+.act-card summary { cursor: pointer; font-weight: 600; }
+.act-card .portal-actions { margin-top: 20px; }
+.act-section .portal-row { flex-wrap: wrap; }
+@media (max-width: 640px) { .act-grid { grid-template-columns: 1fr; } .act-line, .act-confirm { padding: 12px; } }
