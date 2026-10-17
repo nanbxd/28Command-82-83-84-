@@ -1,6 +1,7 @@
 import type { RequestRecord } from '../request/types';
 export type HistoryEvent = { at: string; actor: string; action: string; text: string; status?: string; forwarded_to?: string | null };
 export type Project = {
+  is_blocked: boolean; blocking_history: HistoryEvent[];
   contractor_id: string | null; contractor_name: string | null;
   id: string; request_id: string; name: string; company: string;
   details: RequestRecord['payload']['objects'][number]; status: string; plan: string;

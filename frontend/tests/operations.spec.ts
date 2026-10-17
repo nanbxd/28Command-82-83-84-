@@ -93,7 +93,12 @@ test('real accounts, request to object, worker photos, client documents and comp
     const staff = await adminContext.newPage(); await session(staff, admin.access_token); await staff.goto('/admin/requests');
     await staff.getByRole('searchbox', { name: 'Поиск по текущему разделу' }).fill(source.id);
     await staff.getByRole('button', { name: `Открыть заявку ${source.id}` }).click();
-    await staff.getByRole('button', { name: 'Создать / открыть объекты' }).click();
+    await staff.getByRole('button', { name: 'Создать объекты' }).click();
+    await expect(staff.getByRole('button', { name: 'Создать объекты', exact: true })).toHaveCount(0);
+    await staff.getByRole('button', { name: 'Закрыть карточку' }).click();
+    await staff.getByRole('button', { name: `Открыть заявку ${source.id}` }).click();
+    await expect(staff.getByRole('link', { name: 'Офис проверки обслуживания →' })).toBeVisible();
+    await expect(staff.getByRole('button', { name: 'Создать объекты', exact: true })).toHaveCount(0);
     await staff.getByRole('link', { name: 'Офис проверки обслуживания →' }).click();
     await expect(staff.getByRole('heading', { name: 'Офис проверки обслуживания.' })).toBeVisible(); const projectUrl = staff.url(); const projectId = projectUrl.split('/').at(-1)!;
     await staff.getByRole('button', { name: 'Изменить условия' }).click(); const conditions = staff.getByRole('dialog');
