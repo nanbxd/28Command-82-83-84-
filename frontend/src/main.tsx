@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, Link } from 'react-router-dom';
-import { AuthProvider } from './features/auth/AuthProvider';
+import { AuthProvider, useAuth } from './features/auth/AuthProvider';
 import { RequestPage } from './features/request/RequestPage';
 import { RequestsPage } from './features/request/RequestsPage';
 import '@fontsource-variable/montserrat';
@@ -17,14 +17,21 @@ const Complaints = React.lazy(() => import('./features/portal/Complaints'));
 const CoinsPage = React.lazy(() => import('./features/coins/CoinsPage'));
 const CoinsReviewPage = React.lazy(() => import('./features/coins/CoinsReviewPage'));
 
+function ClientRequestRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <main role="status">Загружаем кабинет…</main>;
+  if (user && user.role !== 'client') return <Navigate replace to={user.role === 'worker' ? '/work' : user.role === 'contractor' ? '/contractor' : '/admin'} />;
+  return children;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
       <React.Suspense fallback={<main role="status">Загружаем кабинет…</main>}><Routes>
-        <Route path="/" element={<RequestPage />} />
-        <Route path="/requests" element={<RequestsPage />} />
-        <Route path="/requests/:id" element={<RequestsPage />} />
+        <Route path="/" element={<ClientRequestRoute><RequestPage /></ClientRequestRoute>} />
+        <Route path="/requests" element={<ClientRequestRoute><RequestsPage /></ClientRequestRoute>} />
+        <Route path="/requests/:id" element={<ClientRequestRoute><RequestsPage /></ClientRequestRoute>} />
         <Route path="/admin" element={<Portal audience="staff" />}>
           <Route index element={<Navigate to="requests" replace />} />
           <Route path="requests" element={<AdminPage />} />

@@ -145,3 +145,22 @@ def test_repeated_failed_login_is_limited(client):
         assert client.post("/api/v1/auth/login", json={"email": "unknown@example.com", "password": "incorrect"}).status_code == 401
     response = client.post("/api/v1/auth/login", json={"email": "unknown@example.com", "password": "incorrect"})
     assert response.status_code == 429 and response.headers["Retry-After"] == "900"
+
+
+@pytest.mark.parametrize("role", ["manager", "superadmin", "contractor", "worker"])
+def test_only_clients_can_create_requests(client, db, submission, role):
+    auth = headers(client)
+    user = db.scalar(select(User))
+    user.role = role
+    db.commit()
+    response = client.post("/api/v1/requests", json=submission, headers=auth)
+    assert response.status_code == 403
+    assert db.scalar(select(func.count()).select_from(ServiceRequest)) == 0
+    # A previous client submission cannot bypass the role check through retries.
+    user.role = "client"
+    db.commit()
+    assert client.post("/api/v1/requests", json=submission, headers=auth).status_code == 201
+    user.role = role
+    db.commit()
+    assert client.post("/api/v1/requests", json=submission, headers=auth).status_code == 403
+    assert db.scalar(select(func.count()).select_from(ServiceRequest)) == 1

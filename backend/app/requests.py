@@ -23,6 +23,8 @@ def same_submission(record, payload):
 
 @router.post("/requests", response_model=RequestOutput, status_code=201)
 def create_request(data: CreateRequest, user: CurrentUser, db: Db, response: Response):
+    if user.role != "client":
+        raise HTTPException(403, "Создавать заявки могут только клиенты.")
     payload = data.details.model_dump(mode="json")
     existing = existing_request(db, user.id, data.idempotency_key)
     if existing:
