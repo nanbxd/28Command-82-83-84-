@@ -198,3 +198,26 @@ def test_schedule_limits_from_normative_package():
     with pytest.raises(HTTPException) as total:
         validate_schedule(prior, data, 'one')
     assert '14' in total.value.detail
+
+
+def test_real_jpeg_before_start_and_after_completion(client, flow):
+    f = flow
+    stream = BytesIO()
+    Image.new('RGB', (80, 60), color='white').save(stream, format='JPEG')
+    image = stream.getvalue()
+    endpoint = f'/api/v1/projects/{f["project"]}/files'
+    actions = f'/api/v1/visits/{f["visit"]}/actions'
+    for kind in ('before', 'after'):
+        uploaded = client.post(endpoint, headers=f['worker'], params={
+            'kind': kind, 'name': 'phone.JPG', 'visit_id': f['visit'],
+        }, content=image)
+        assert uploaded.status_code == 201, uploaded.text
+        assert uploaded.json()['content_type'] == 'image/jpeg'
+        if kind == 'before':
+            started = client.post(actions, headers=f['worker'], json={'action':'start', 'checked':[], 'notes':''})
+            assert started.status_code == 200, started.text
+            incomplete = client.post(actions, headers=f['worker'], json={'action':'submit', 'checked':[0,1]})
+            assert incomplete.status_code == 422
+            assert 'фото до и после' in incomplete.json()['detail']
+    completed = client.post(actions, headers=f['worker'], json={'action':'submit', 'checked':[0,1], 'notes':''})
+    assert completed.status_code == 200, completed.text

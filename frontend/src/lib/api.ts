@@ -12,10 +12,11 @@ export class ApiError extends Error {
 }
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
+  let timedOut = false;
   const abort = () => controller.abort();
   if (options.signal?.aborted) abort();
   options.signal?.addEventListener('abort', abort, { once: true });
-  const timeout = setTimeout(() => controller.abort(), 20000);
+  const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, options.body instanceof Blob ? 120000 : 60000);
   try {
     const token = getToken();
     const response = await fetch(`${base}/api/v1${path}`, {
@@ -29,6 +30,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     return response.status === 204 ? undefined as T : response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    if (timedOut) throw new ApiError('Сервер не ответил вовремя. Обновите данные и проверьте, сохранились ли изменения, прежде чем повторять действие.', 0);
     throw new ApiError('Не удалось связаться с сервером. Проверьте соединение и повторите действие.', 0);
   } finally { clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
 }

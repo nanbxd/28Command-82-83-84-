@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO
+import logging
 from typing import Literal
 from urllib.parse import quote
 from uuid import uuid4
@@ -16,6 +17,7 @@ from .operations_models import CleaningRun, Complaint, Project, StoredFile, Visi
 from .request_schemas import StrictModel
 
 router = APIRouter(prefix="/api/v1", tags=["Service operations"])
+logger = logging.getLogger(__name__)
 STAFF = {"manager", "superadmin"}
 LOCAL = timezone(timedelta(hours=5))
 MAX_FILE = 8 * 1024 * 1024
@@ -243,6 +245,12 @@ class VisitAction(StrictModel):
     notes: str = Field(default="", max_length=5000)
 
 
+def reject_visit_action(reason: str, detail: str):
+    # Fixed diagnostic codes only: never log submitted text, photos or credentials.
+    logger.warning("visit_action_rejected reason=%s", reason)
+    raise HTTPException(422, detail)
+
+
 @router.post("/visits/{visit_id}/actions")
 def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
     if user.role in STAFF:
@@ -273,7 +281,7 @@ def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
         raise HTTPException(409, "Состояние уборки изменилось. Обновите карточку.")
     if data.action == "start":
         if "before" not in kinds:
-            raise HTTPException(422, "Добавьте фото до уборки.")
+            reject_visit_action("before_photo_missing", "Фото «до» ещё не сохранено. Выберите фотографию и нажмите «Загрузить файл», затем начните уборку.")
         # Serialize actual starts across objects for the same worker.
         db.scalar(select(User).where(User.id == row.worker_id).with_for_update())
         if db.scalar(select(Visit.id).where(Visit.worker_id == row.worker_id, Visit.id != row.id, Visit.status == "in_progress")):
@@ -281,15 +289,18 @@ def visit_action(visit_id: str, data: VisitAction, user: CurrentUser, db: Db):
         row.actual_start = utcnow()
     if data.action in {"save", "submit"}:
         if any(i < 0 or i >= len(row.checklist) for i in data.checked):
-            raise HTTPException(422, "Неизвестный пункт чек-листа.")
+            reject_visit_action("unknown_checklist_item", "Чек-лист изменился. Обновите карточку и отметьте выполненные работы заново.")
         row.checklist = [{"text": item["text"], "done": i in data.checked} for i, item in enumerate(row.checklist)]
         row.notes = data.notes
     if data.action == "submit":
-        if not {"before", "after"}.issubset(kinds) or not all(item["done"] for item in row.checklist):
-            raise HTTPException(422, "Для отправки нужны фото до и после и выполненный чек-лист.")
+        if not {"before", "after"}.issubset(kinds):
+            missing = "before_photo_missing" if "before" not in kinds else "after_photo_missing"
+            reject_visit_action(missing, "Для отправки нужны сохранённые фото до и после уборки. Нажмите «Загрузить файл» для недостающей фотографии.")
+        if not all(item["done"] for item in row.checklist):
+            reject_visit_action("checklist_incomplete", "Отметьте все выполненные работы в чек-листе перед отправкой отчёта.")
         row.actual_end = utcnow()
     if data.action == "return" and not data.notes:
-        raise HTTPException(422, "Укажите причину возврата отчёта.")
+        reject_visit_action("return_reason_missing", "Укажите причину возврата отчёта.")
     row.status = status
     if row.run_id and data.action == "cancel":
         db.flush()
