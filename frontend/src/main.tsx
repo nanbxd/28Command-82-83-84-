@@ -14,6 +14,7 @@ const Projects = React.lazy(() => import('./features/portal/Projects'));
 const ProjectPage = React.lazy(() => import('./features/portal/ProjectPage'));
 const Accounts = React.lazy(() => import('./features/portal/Accounts'));
 const Invitations = React.lazy(() => import('./features/portal/Invitations'));
+const SupportChat = React.lazy(() => import('./features/portal/SupportChat'));
 const Complaints = React.lazy(() => import('./features/portal/Complaints'));
 const CoinsPage = React.lazy(() => import('./features/coins/CoinsPage'));
 const CoinsReviewPage = React.lazy(() => import('./features/coins/CoinsReviewPage'));
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/requests" element={<ClientRequestRoute><RequestsPage /></ClientRequestRoute>} />
         <Route path="/requests/:id" element={<ClientRequestRoute><RequestsPage /></ClientRequestRoute>} />
         <Route path="/admin" element={<Portal audience="staff" />}>
+          <Route path="support" element={<SupportChat />} />
           <Route index element={<Navigate to="requests" replace />} />
           <Route path="requests" element={<AdminPage />} />
           <Route path="projects" element={<Projects />} />
@@ -42,12 +44,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="accounts" element={<Accounts />} />
         </Route>
         <Route path="/cabinet" element={<Portal audience="client" />}>
+          <Route path="support" element={<SupportChat />} />
           <Route index element={<Navigate to="projects" replace />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectPage />} />
           <Route path="complaints" element={<Complaints />} />
         </Route>
         <Route path="/contractor" element={<Portal audience="contractor" />}>
+          <Route path="support" element={<SupportChat />} />
           <Route index element={<Navigate to="projects" replace />} />
           <Route path="ic-coins" element={<CoinsReviewPage />} />
           <Route path="projects" element={<Projects />} />
@@ -56,6 +60,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="complaints" element={<Complaints />} />
         </Route>
         <Route path="/work" element={<Portal audience="worker" />}>
+          <Route path="support" element={<SupportChat />} />
           <Route index element={<Navigate to="projects" replace />} />
           <Route path="invitations" element={<Invitations />} />
           <Route path="ic-coins" element={<CoinsPage />} />

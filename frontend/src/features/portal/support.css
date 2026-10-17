@@ -1,0 +1,15 @@
+.support-chat { max-width: 960px; padding: 24px; }
+.support-chat > .portal-muted { margin: 0 0 24px; font-size: 13px; line-height: 1.7; }
+.support-messages { max-height: 58vh; overflow-y: auto; overscroll-behavior: contain; padding: 8px 4px; }
+.support-empty { padding: 24px 0 40px; }
+.support-empty h2 { margin-top: 0; }
+.support-empty .portal-actions { margin-top: 24px; }
+.support-turn { margin-bottom: 28px; }
+.support-question { margin-left: 12%; background: var(--accent-pale, #eef5e3); border-radius: 12px; padding: 16px 20px; }
+.support-answer { margin: 16px 12% 0 0; padding: 0 4px; }
+.support-message-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; font-weight: 600; }
+.support-message-label time { font-weight: 400; color: var(--muted, #626861); }
+.support-turn p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; margin: 8px 0; }
+.support-compose { border-top: 1px solid var(--line, #e0e4db); padding-top: 20px; margin-top: 16px; }
+@media (max-width: 600px) { .support-chat { padding: 16px; } .support-question { margin-left: 0; padding: 14px; } .support-answer { margin-right: 0; } .support-message-label { flex-wrap: wrap; } .support-messages { max-height: 60vh; } }
+@media (prefers-reduced-motion: reduce) { .support-messages { scroll-behavior: auto; } }

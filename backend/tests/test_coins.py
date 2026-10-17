@@ -155,16 +155,17 @@ def test_team_isolation_and_disabled_worker(client, db, team):
 
 def test_migration_adds_and_removes_only_coin_tables():
     engine = create_engine('sqlite://')
-    migration_path = Path(__file__).parents[1] / 'migrations/versions/c28a14f03003_ic_coins.py'
+    migration_path = Path(__file__).parents[1] / 'migrations/versions/c28a14f03004_ic_coins.py'
     spec = spec_from_file_location('coin_migration', migration_path)
     migration = module_from_spec(spec)
     spec.loader.exec_module(migration)
     with engine.begin() as connection:
         connection.exec_driver_sql('CREATE TABLE users (id VARCHAR(80) PRIMARY KEY)')
+        connection.exec_driver_sql('CREATE TABLE projects (id VARCHAR(80) PRIMARY KEY, is_blocked BOOLEAN NOT NULL DEFAULT false, blocking_history JSON NOT NULL DEFAULT \'[]\')')
         with Operations.context(MigrationContext.configure(connection)):
             migration.upgrade()
-            assert set(inspect(connection).get_table_names()) == {'users', 'coin_requests', 'coin_transactions'}
+            assert set(inspect(connection).get_table_names()) == {'users', 'projects', 'coin_requests', 'coin_transactions'}
             assert any(i['name'] == 'uq_coin_request_active_work' and i['unique'] for i in inspect(connection).get_indexes('coin_requests'))
             migration.downgrade()
-            assert inspect(connection).get_table_names() == ['users']
+            assert set(inspect(connection).get_table_names()) == {'users', 'projects'}
     engine.dispose()

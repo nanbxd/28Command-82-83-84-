@@ -21,6 +21,8 @@ services:
       FRONTEND_ORIGIN: http://localhost:8080,http://localhost:5173
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:?Set SUPERADMIN_EMAIL in .env}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:?Set SUPERADMIN_PASSWORD in .env}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
     depends_on:
       db:
         condition: service_healthy
