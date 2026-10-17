@@ -17,7 +17,7 @@ function AccountList() {
   const [creating, setCreating] = useState(false);
   const [reset, setReset] = useState<Account | null>(null);
   const [password, setPassword] = useState('');
-  return <><PageHeading title={user?.role === 'contractor' ? 'Моя команда' : 'Аккаунты сотрудников'} text={user?.role === 'contractor' ? 'Создавайте работников и назначайте им задания на своих объектах.' : 'Администратор создаёт субподрядчиков. Других администраторов создаёт только суперадминистратор.'}><button className="ad-button ad-button-primary" onClick={() => setCreating(true)}>Создать аккаунт</button></PageHeading>{action.feedback}
+  return <><PageHeading title={user?.role === 'contractor' ? 'Моя команда' : 'Аккаунты сотрудников'} text={user?.role === 'contractor' ? 'Управляйте созданными вами аккаунтами. На смену можно пригласить свободного работника из общей базы.' : 'Администратор создаёт работников и субподрядчиков. Других администраторов создаёт только суперадминистратор.'}><button className="ad-button ad-button-primary" onClick={() => setCreating(true)}>Создать аккаунт</button></PageHeading>{action.feedback}
     {resource.error && resource.data && <LoadState error={resource.error} retry={resource.reload} />}
     {!resource.data ? <LoadState error={resource.error} retry={resource.reload} /> : <div className="portal-panel ad-table-wrap"><table className="portal-table" role="table"><thead><tr><th scope="col">Сотрудник</th><th scope="col">Роль</th><th scope="col">Доступ</th><th scope="col">Действия</th></tr></thead><tbody>{resource.data.map(account => <tr key={account.id}>
       <td><strong>{account.name}</strong><span>{account.email}</span></td>
@@ -37,7 +37,7 @@ function AccountForm({ onSaved }: { onSaved: () => void }) {
     if (await action.run(() => api('/staff/accounts', { method: 'POST', body: JSON.stringify(data) }))) onSaved();
   }
   return <form className="portal-form" onSubmit={submit}><p>Передайте сотруднику email и пароль лично. Письмо автоматически не отправляется.</p>
-    <label className="field">Роль<select name="role" aria-label="Роль">{user?.role === 'superadmin' && <option value="manager">Администратор</option>}{user?.role !== 'contractor' && <option value="contractor">Субподрядчик</option>}{['superadmin', 'contractor'].includes(user?.role || '') && <option value="worker">Работник</option>}</select></label>
+    <label className="field">Роль<select name="role" aria-label="Роль">{user?.role === 'superadmin' && <option value="manager">Администратор</option>}{user?.role !== 'contractor' && <option value="contractor">Субподрядчик</option>}<option value="worker">Работник</option></select></label>
     <label className="field">Имя<input name="name" required minLength={2} maxLength={160} autoComplete="off" /></label>
     <label className="field">Email<input type="email" name="email" required maxLength={254} autoComplete="off" /></label>
     <label className="field">Телефон<input type="tel" name="phone" required placeholder="+7 700 123 45 67" /></label>

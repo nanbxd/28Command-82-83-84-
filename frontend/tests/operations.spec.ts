@@ -110,6 +110,7 @@ test('real accounts, request to object, worker photos, client documents and comp
     expect(assigned.status()).toBe(200);
     const planned = await request.post(`${api}/api/v1/projects/${projectId}/runs`, { headers: { Authorization: `Bearer ${contractor.access_token}` }, data: { name: 'Проверка уборки', assignments: [{ zone: 'Полы и санузлы', worker_id: worker.user.id, planned_start: `${localInput(-1)}:00+05:00`, planned_end: `${localInput(59)}:00+05:00`, checklist: ['Убрать полы', 'Убрать санузлы'] }] } });
     expect(planned.status()).toBe(201); const cleaningRun = await planned.json();
+    expect((await request.post(`${api}/api/v1/invitations/${cleaningRun.id}/respond`, { headers: { Authorization: `Bearer ${worker.access_token}` }, data: { decision: 'accept' } })).status()).toBe(200);
     const executor = await workerContext.newPage(); await session(executor, worker.access_token); await executor.goto(`/work/projects/${projectId}`);
     const upload = async (who: Page, label: RegExp) => { const input = who.getByLabel(label); await input.setInputFiles(photo); const form = input.locator('xpath=ancestor::form'); await form.getByRole('button', { name: 'Загрузить файл' }).click(); await expect(form.getByRole('status')).toContainText('Файл сохранён.'); };
     await upload(executor, /^До уборки ·/); await executor.getByRole('button', { name: 'Начать уборку', exact: true }).click();

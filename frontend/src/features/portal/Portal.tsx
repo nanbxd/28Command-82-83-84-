@@ -53,6 +53,13 @@ export function Empty({ title, children }: { title: string; children: ReactNode 
   return <section className="portal-empty"><Building2 size={30} aria-hidden="true" /><h2>{title}</h2>{children}</section>;
 }
 
+function WorkerInvitationsNotice() {
+  const resource = useResource<{ id: string }[]>('/invitations');
+  useEffect(() => { const timer = window.setInterval(resource.reload, 30000); return () => window.clearInterval(timer); }, []);
+  if (!resource.data?.length) return null;
+  return <p className="portal-notice" role="status"><Link to="/work/invitations">Приглашения на смены: {resource.data.length}. Посмотреть и ответить →</Link></p>;
+}
+
 export default function Portal({ audience }: { audience: 'staff' | 'client' | 'worker' | 'contractor' }) {
   const auth = useAuth();
   const location = useLocation();
@@ -69,6 +76,7 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
     ...(audience === 'staff' ? [{ href: '/admin/requests', label: 'Заявки клиентов', icon: Inbox }] : []),
     { href: `${base}/projects`, label: audience === 'worker' ? 'Мои объекты и уборки' : 'Объекты', icon: Building2 },
     ...(audience === 'worker' ? [{ href: '/work/ic-coins', label: 'IC-coins', icon: Coins }] : []),
+    ...(audience === 'worker' ? [{ href: '/work/invitations', label: 'Приглашения на смены', icon: Inbox }] : []),
     ...(audience === 'contractor' ? [{ href: '/contractor/ic-coins', label: 'Бонусы команды', icon: Coins }] : []),
     ...(audience === 'client' ? [{ href: '/requests', label: 'Мои заявки', icon: Inbox }] : []),
     { href: `${base}/complaints`, label: 'Обращения по качеству', icon: MessageSquareText },
@@ -80,7 +88,7 @@ export default function Portal({ audience }: { audience: 'staff' | 'client' | 'w
       <nav className="ad-navigation" aria-label="Разделы кабинета">{navigation.map(({ href, label, icon: Icon }) => <NavLink key={href} to={href} className={({ isActive }) => `ad-nav-link ${isActive ? 'is-active' : ''}`}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
       <div className="ad-sidebar-bottom">{auth.user?.role === 'client' && <Link to="/">Новая заявка <ArrowUpRight size={15} /></Link>}<a href="https://www.ic-group.kz/" target="_blank" rel="noreferrer">Основной сайт <ArrowUpRight size={15} /></a></div>
     </aside><div className="ad-workspace"><header className="ad-topbar"><strong>{audience === 'staff' ? 'Кабинет IC Group' : audience === 'worker' ? 'Кабинет работника' : auth.user?.company}</strong><div className="portal-account"><span>{auth.user?.name}<small>{auth.user?.role === 'superadmin' ? 'Суперадминистратор' : audience === 'staff' ? 'Администратор' : audience === 'worker' ? 'Работник' : audience === 'contractor' ? 'Субподрядчик' : 'Клиент'}</small></span><button className="ad-button" aria-label="Выйти из аккаунта" disabled={action.busy} onClick={() => void action.run(auth.logout, '')}><LogOut size={17} /></button></div></header>
-      <main id="portal-content" className="ad-main" tabIndex={-1}>{action.feedback}<Outlet key={auth.user?.id} /></main>
+      <main id="portal-content" className="ad-main" tabIndex={-1}>{action.feedback}{audience === 'worker' && <WorkerInvitationsNotice />}<Outlet key={auth.user?.id} /></main>
       <footer className="portal-footer">IC Group · Управление качеством <span>Время: Казахстан, UTC+5</span></footer></div>
   </div>;
 }
